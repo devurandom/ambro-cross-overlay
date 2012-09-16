@@ -1,0 +1,12 @@
+--- Makefile.in.orig	2011-10-19 18:53:06.333119083 +0000
++++ Makefile.in	2011-10-19 18:55:02.004664894 +0000
+@@ -767,7 +767,8 @@
+ 	case $(do) in \
+ 	all) \
+ 	cd $@; \
+-	test -f Makefile || $(SHELL) $$srcdir/configure ; \
++	args=`$(top_builddir)/config.status --config`; \
++	test -f Makefile || eval $$srcdir/configure "$$args" --srcdir=$$srcdir; \
+ 	$(MAKE) ACLOCAL=: AUTOCONF=: AUTOHEADER=: AUTOMAKE=: $(do) ;; \
+ 	esac
+ 

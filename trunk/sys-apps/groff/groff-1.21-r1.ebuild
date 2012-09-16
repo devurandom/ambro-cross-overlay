@@ -31,6 +31,7 @@ DEPEND="${RDEPEND}
 src_prepare() {
 	epatch "${FILESDIR}"/${PN}-1.19.2-man-unicode-dashes.patch #16108 #17580 #121502
 	epatch "${FILESDIR}"/${PN}-1.20.1-pdfmark-parallel.patch
+	epatch "${FILESDIR}"/${PN}-1.21-cross-compile.patch
 
 	# Make sure we can cross-compile this puppy
 	if tc-is-cross-compiler ; then

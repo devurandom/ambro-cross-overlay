@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-lang/python/python-3.2.3.ebuild,v 1.16 2012/08/03 21:22:53 blueness Exp $
 
-EAPI="3"
+EAPI="4-hdepend"
 WANT_AUTOMAKE="none"
 WANT_LIBTOOL="none"
 
@@ -40,10 +40,13 @@ RDEPEND="app-arch/bzip2
 			)
 			xml? ( >=dev-libs/expat-2.1 )
 		)"
-DEPEND="${RDEPEND}
+DEPEND="${RDEPEND}"
+HDEPEND="
 		virtual/pkgconfig
+		sys-apps/paxctl
 		>=sys-devel/autoconf-2.65
 		!sys-devel/gcc[libffi]"
+CROSS_HDEPEND="~${CATEGORY}/${P}"
 RDEPEND+=" !build? ( app-misc/mime-types )
 	doc? ( dev-python/python-docs:${SLOT} )"
 
@@ -73,6 +76,37 @@ src_prepare() {
 	EPATCH_EXCLUDE="${excluded_patches}" EPATCH_SUFFIX="patch" \
 		epatch "${WORKDIR}/${PV}-${PATCHSET_REVISION}"
 	epatch "${FILESDIR}"/${PN}-3.2.3-x32.patch
+
+        if tc-is-cross-compiler; then
+                # Patch contains three fixes:
+                # 1. setup.py does not append "-I/usr/include" to the CFLAGS when
+                # compiling the python modules for the target system.  Otherwise the
+                # compilation can fail, e.g. with weird asm errors, due to wrong system
+                # headers being used.  It does not suffice to have the correct
+                # "-I${SYSROOT}/usr/include" in the CFLAGS variable in make.conf as the
+                # gcc include directory search order will always look in those
+                # directories last.
+                # 2. Use hostpython and header files from ${SYSROOT} for regen
+                # 3. Makefile uses hostpython for compileall
+                epatch "${FILESDIR}"/fix-cross-compile.patch
+        fi
+
+        # Patch makes setup.py and distutils read the PYTHON_SETUP_SYSROOT
+        # variable to look for libraries and headers in the target system
+        # and not on the host. Without this it can find libraries on the
+        # host which don't exist in the target and fail to link.
+        # Example: if ncurses is built without unicode support, linking fails
+        # becuse libncursesw is missing, but present on host.
+        # NOTE: the host python must be compiled with this!
+        epatch "${FILESDIR}"/python-3.2-sysroot.patch
+
+	if tc-is-cross-compiler; then
+		# Make sure above patch was applied to host python.
+		local command='from distutils import unixccompiler; unixccompiler.supports_sysroot()'
+		if ! /usr/bin/python${SLOT} -c "${command}"; then
+			die "Sysroot patch not applied to host Python, reinstall it from this ebuild!"
+		fi
+	fi
 
 	sed -i -e "s:@@GENTOO_LIBDIR@@:$(get_libdir):g" \
 		Lib/distutils/command/install.py \
@@ -134,16 +168,29 @@ src_configure() {
 	fi
 
 	if tc-is-cross-compiler; then
-		OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
-		./configure --{build,host}=${CBUILD} || die "cross-configure failed"
-		emake python Parser/pgen || die "cross-make failed"
-		mv python hostpython
+		# configure build python
+                OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
+                ./configure --{build,host}=${CBUILD} || die "failed to configure build python"
+
+		# build just the parser generator
+                OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
+                emake Parser/pgen || die "failed to make parser generator"
+
+		# rename pgen so it isn't overwritten by cross build
 		mv Parser/pgen Parser/hostpgen
+
+		# make cross build use the parser generator we have built
+                sed -i \
+                        -e "/^HOSTPYTHON/s:=.*:=./hostpython:" \
+                        -e "/^HOSTPGEN/s:=.*:=./Parser/hostpgen:" \
+                        Makefile.pre.in || die "sed failed"
+
+		# make it use the python from the build system
+		ln -s /usr/bin/python${SLOT} hostpython
+
+		# clean up
 		make distclean
-		sed -i \
-			-e "/^HOSTPYTHON/s:=.*:=./hostpython:" \
-			-e "/^HOSTPGEN/s:=.*:=./Parser/hostpgen:" \
-			Makefile.pre.in || die "sed failed"
+		rm -rf build
 	fi
 
 	# Export CXX so it ends up in /usr/lib/python3.X/config/Makefile.
@@ -179,9 +226,8 @@ src_configure() {
 }
 
 src_compile() {
-	emake CPPFLAGS="" CFLAGS="" LDFLAGS="" || die "emake failed"
+	PYTHON_SETUP_SYSROOT="$ROOT" emake CPPFLAGS="" CFLAGS="" LDFLAGS="" || die "emake failed"
 
-	# Work around bug 329499. See also bug 413751.
 	pax-mark m python
 }
 
@@ -228,7 +274,7 @@ src_test() {
 }
 
 src_install() {
-	emake DESTDIR="${D}" altinstall || die "emake altinstall failed"
+	PYTHON_SETUP_SYSROOT="$ROOT" emake DESTDIR="${D}" altinstall || die "emake altinstall failed"
 	python_clean_installation_image -q
 
 	sed \

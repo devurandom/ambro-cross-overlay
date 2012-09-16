@@ -1,0 +1,113 @@
+diff -urN Python-3.2.3.orig/Lib/distutils/unixccompiler.py Python-3.2.3/Lib/distutils/unixccompiler.py
+--- Python-3.2.3.orig/Lib/distutils/unixccompiler.py	2012-09-16 18:26:29.961789357 +0200
++++ Python-3.2.3/Lib/distutils/unixccompiler.py	2012-09-16 22:40:50.077271550 +0200
+@@ -38,6 +38,26 @@
+ #     should just happily stuff them into the preprocessor/compiler/linker
+ #     options and carry on.
+ 
++def _macosx_sdk_root():
++    """
++    Return the directory of the current OSX SDK,
++    or '/' if no SDK was specified.
++    """
++    cflags = sysconfig.get_config_var('CFLAGS')
++    m = re.search(r'-isysroot\s+(\S+)', cflags)
++    if m is None:
++        sysroot = '/'
++    else:
++        sysroot = m.group(1)
++    return sysroot
++
++def _get_sysroot():
++    if sys.platform == 'darwin':
++        return _macosx_sdk_root()
++    if 'PYTHON_SETUP_SYSROOT' in os.environ:
++        return os.environ['PYTHON_SETUP_SYSROOT']
++    return '/'
++
+ def _darwin_compiler_fixup(compiler_so, cc_args):
+     """
+     This function will strip '-isysroot PATH' and '-arch ARCH' from the
+@@ -101,6 +121,9 @@
+ 
+     return compiler_so
+ 
++def supports_sysroot():
++    return True
++
+ class UnixCCompiler(CCompiler):
+ 
+     compiler_type = 'unix'
+@@ -315,25 +338,14 @@
+         dylib_f = self.library_filename(lib, lib_type='dylib')
+         static_f = self.library_filename(lib, lib_type='static')
+ 
+-        if sys.platform == 'darwin':
+-            # On OSX users can specify an alternate SDK using
+-            # '-isysroot', calculate the SDK root if it is specified
+-            # (and use it further on)
+-            cflags = sysconfig.get_config_var('CFLAGS')
+-            m = re.search(r'-isysroot\s+(\S+)', cflags)
+-            if m is None:
+-                sysroot = '/'
+-            else:
+-                sysroot = m.group(1)
+-
+-
++        sysroot = _get_sysroot()
+ 
+         for dir in dirs:
+             shared = os.path.join(dir, shared_f)
+             dylib = os.path.join(dir, dylib_f)
+             static = os.path.join(dir, static_f)
+ 
+-            if sys.platform == 'darwin' and (
++            if sys.platform != 'darwin' or (
+                 dir.startswith('/System/') or (
+                 dir.startswith('/usr/') and not dir.startswith('/usr/local/'))):
+ 
+diff -urN Python-3.2.3.orig/setup.py Python-3.2.3/setup.py
+--- Python-3.2.3.orig/setup.py	2012-09-16 18:26:30.213821389 +0200
++++ Python-3.2.3/setup.py	2012-09-16 19:45:03.265826057 +0200
+@@ -61,6 +61,13 @@
+     """
+     return (path.startswith('/usr/') and not path.startswith('/usr/local')) or path.startswith('/System/')
+ 
++def get_sysroot():
++    if sys.platform == 'darwin':
++        return macosx_sdk_root()
++    if 'PYTHON_SETUP_SYSROOT' in os.environ:
++        return os.environ['PYTHON_SETUP_SYSROOT']
++    return '/'
++
+ def find_file(filename, std_dirs, paths):
+     """Searches for the directory where a given file is located,
+     and returns a possibly-empty list of additional directories, or None
+@@ -105,8 +112,7 @@
+     if result is None:
+         return None
+ 
+-    if sys.platform == 'darwin':
+-        sysroot = macosx_sdk_root()
++    sysroot = get_sysroot()
+ 
+     # Check whether the found file is in one of the standard directories
+     dirname = os.path.dirname(result)
+@@ -114,7 +120,7 @@
+         # Ensure path doesn't end with path separator
+         p = p.rstrip(os.sep)
+ 
+-        if sys.platform == 'darwin' and is_macosx_sdk_path(p):
++        if sys.platform != 'darwin' or is_macosx_sdk_path(p):
+             if os.path.join(sysroot, p[1:]) == dirname:
+                 return [ ]
+ 
+@@ -127,7 +133,7 @@
+         # Ensure path doesn't end with path separator
+         p = p.rstrip(os.sep)
+ 
+-        if sys.platform == 'darwin' and is_macosx_sdk_path(p):
++        if sys.platform != 'darwin' or is_macosx_sdk_path(p):
+             if os.path.join(sysroot, p[1:]) == dirname:
+                 return [ p ]
+ 

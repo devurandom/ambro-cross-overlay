@@ -1,0 +1,44 @@
+--- Lib/plat-linux2/regen
++++ Lib/plat-linux2/regen
+@@ -5,4 +5,9 @@
+ 	exit 1;;
+ esac
+ set -v
+-python$EXE ../../Tools/scripts/h2py.py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/dlfcn.h /usr/include/linux/cdrom.h
++INCLUDE="${SYSROOT}/usr/include" hostpython ../../Tools/scripts/h2py.py \
++	-i '(u_long)' \
++	"${SYSROOT}/usr/include/sys/types.h" \
++	"${SYSROOT}/usr/include/netinet/in.h" \
++	"${SYSROOT}/usr/include/dlfcn.h" \
++	"${SYSROOT}/usr/include/linux/cdrom.h"
+--- Makefile.pre.in
++++ Makefile.pre.in
+@@ -459,7 +459,7 @@
+ 	cd $(srcdir)/Lib/$(PLATDIR); \
+ 	$(RUNSHARED) ./regen || exit 1; \
+ 	for module in *.py; do \
+-		$(RUNSHARED) $(BUILDPYTHON) -c "import py_compile; py_compile.compile('$$module', cfile='/dev/null', doraise=True)" || exit 1; \
++		$(RUNSHARED) ../../$(HOSTPYTHON) -c "import py_compile; py_compile.compile('$$module', cfile='/dev/null', doraise=True)" || exit 1; \
+ 	done
+ 
+ # Build static library
+--- setup.py
++++ setup.py
+@@ -450,17 +450,6 @@
+                     for directory in reversed(options.dirs):
+                         add_dir_to_list(dir_list, directory)
+ 
+-        if os.path.normpath(sys.prefix) != '/usr' \
+-                and not sysconfig.get_config_var('PYTHONFRAMEWORK'):
+-            # OSX note: Don't add LIBDIR and INCLUDEDIR to building a framework
+-            # (PYTHONFRAMEWORK is set) to avoid # linking problems when
+-            # building a framework with different architectures than
+-            # the one that is currently installed (issue #7473)
+-            add_dir_to_list(self.compiler.library_dirs,
+-                            sysconfig.get_config_var("LIBDIR"))
+-            add_dir_to_list(self.compiler.include_dirs,
+-                            sysconfig.get_config_var("INCLUDEDIR"))
+-
+         # lib_dirs and inc_dirs are used to search for files;
+         # if a file is found in one of those directories, it can
+         # be assumed that no additional -I,-L directives are needed.

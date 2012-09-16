@@ -4,6 +4,8 @@
 
 EAPI="4"
 
+inherit eutils
+
 if [[ ${PV} == "99999999" ]] ; then
 	EGIT_REPO_URI="git://git.overlays.gentoo.org/proj/crossdev.git"
 	inherit git-2
@@ -26,6 +28,11 @@ RDEPEND=">=sys-apps/portage-2.1
 	app-shells/bash
 	!sys-devel/crossdev-wrappers"
 DEPEND="app-arch/xz-utils"
+
+src_prepare() {
+	cd "${S}"
+	epatch "${FILESDIR}"/crossdev-20120721-cross-emerge-ng.patch
+}
 
 src_install() {
 	default

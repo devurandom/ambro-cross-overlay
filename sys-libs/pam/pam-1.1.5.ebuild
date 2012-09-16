@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-libs/pam/pam-1.1.5.ebuild,v 1.9 2012/07/05 16:17:52 flameeyes Exp $
 
-EAPI="4"
+EAPI="4-hdepend"
 
 inherit libtool multilib eutils pam toolchain-funcs flag-o-matic db-use
 
@@ -30,7 +30,8 @@ RDEPEND="nls? ( virtual/libintl )
 		nis? ( || ( >=net-libs/libtirpc-0.2.2-r1 <sys-libs/glibc-2.14 ) )
 	)"
 DEPEND="${RDEPEND}
-	>=sys-devel/libtool-2
+	sys-devel/flex"
+HDEPEND=">=sys-devel/libtool-2
 	sys-devel/flex
 	nls? ( sys-devel/gettext )
 	virtual/pkgconfig"

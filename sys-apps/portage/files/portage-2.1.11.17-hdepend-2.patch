@@ -1,0 +1,335 @@
+diff -urN portage-2.1.11.17/bin/ebuild.sh portage-2.1.11.17.new/bin/ebuild.sh
+--- portage-2.1.11.17/bin/ebuild.sh	2012-09-14 04:39:24.000000000 +0200
++++ portage-2.1.11.17.new/bin/ebuild.sh	2012-09-16 21:09:59.534267702 +0200
+@@ -221,6 +221,8 @@
+ 	local B_DEPEND
+ 	local B_RDEPEND
+ 	local B_PDEPEND
++	local B_HDEPEND
++	local B_CROSS_HDEPEND
+ 	while [ "$1" ]; do
+ 		location="${ECLASSDIR}/${1}.eclass"
+ 		olocation=""
+@@ -263,20 +265,22 @@
+ 				EBUILD_OVERLAY_ECLASSES="${EBUILD_OVERLAY_ECLASSES} ${location}"
+ 		fi
+ 
+-		#We need to back up the value of DEPEND and RDEPEND to B_DEPEND and B_RDEPEND
++		#We need to back up the values of *DEPEND to B_*DEPEND
+ 		#(if set).. and then restore them after the inherit call.
+ 
+ 		#turn off glob expansion
+ 		set -f
+ 
+ 		# Retain the old data and restore it later.
+-		unset B_IUSE B_REQUIRED_USE B_DEPEND B_RDEPEND B_PDEPEND
++		unset B_IUSE B_REQUIRED_USE B_DEPEND B_RDEPEND B_PDEPEND B_HDEPEND B_CROSS_HDEPEND
+ 		[ "${IUSE+set}"       = set ] && B_IUSE="${IUSE}"
+ 		[ "${REQUIRED_USE+set}" = set ] && B_REQUIRED_USE="${REQUIRED_USE}"
+ 		[ "${DEPEND+set}"     = set ] && B_DEPEND="${DEPEND}"
+ 		[ "${RDEPEND+set}"    = set ] && B_RDEPEND="${RDEPEND}"
+ 		[ "${PDEPEND+set}"    = set ] && B_PDEPEND="${PDEPEND}"
+-		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
++		[ "${HDEPEND+set}"    = set ] && B_HDEPEND="${HDEPEND}"
++		[ "${CROSS_HDEPEND+set}" = set ] && B_CROSS_HDEPEND="${CROSS_HDEPEND}"
++		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND HDEPEND CROSS_HDEPEND
+ 		#turn on glob expansion
+ 		set +f
+ 
+@@ -292,6 +296,8 @@
+ 		[ "${DEPEND+set}"       = set ] && E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
+ 		[ "${RDEPEND+set}"      = set ] && E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
+ 		[ "${PDEPEND+set}"      = set ] && E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
++		[ "${HDEPEND+set}"      = set ] && E_HDEPEND+="${E_HDEPEND:+ }${HDEPEND}"
++		[ "${CROSS_HDEPEND+set}" = set ] && E_CROSS_HDEPEND+="${E_CROSS_HDEPEND:+ }${CROSS_HDEPEND}"
+ 
+ 		[ "${B_IUSE+set}"     = set ] && IUSE="${B_IUSE}"
+ 		[ "${B_IUSE+set}"     = set ] || unset IUSE
+@@ -308,6 +314,12 @@
+ 		[ "${B_PDEPEND+set}"  = set ] && PDEPEND="${B_PDEPEND}"
+ 		[ "${B_PDEPEND+set}"  = set ] || unset PDEPEND
+ 
++		[ "${B_HDEPEND+set}"  = set ] && HDEPEND="${B_HDEPEND}"
++		[ "${B_HDEPEND+set}"  = set ] || unset HDEPEND
++
++		[ "${B_CROSS_HDEPEND+set}"  = set ] && CROSS_HDEPEND="${B_CROSS_HDEPEND}"
++		[ "${B_CROSS_HDEPEND+set}"  = set ] || unset CROSS_HDEPEND
++
+ 		#turn on glob expansion
+ 		set +f
+ 
+@@ -534,8 +546,9 @@
+ 		# In order to ensure correct interaction between ebuilds and
+ 		# eclasses, they need to be unset before this process of
+ 		# interaction begins.
+-		unset EAPI DEPEND RDEPEND PDEPEND INHERITED IUSE REQUIRED_USE \
+-			ECLASS E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
++		unset EAPI DEPEND RDEPEND PDEPEND HDEPEND CROSS_HDEPEND INHERITED IUSE REQUIRED_USE \
++			ECLASS E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND \
++			E_HDEPEND E_CROSS_HDEPEND
+ 
+ 		if [[ $PORTAGE_DEBUG != 1 || ${-/x/} != $- ]] ; then
+ 			source "$EBUILD" || die "error sourcing ebuild"
+@@ -566,10 +579,12 @@
+ 		DEPEND+="${DEPEND:+ }${E_DEPEND}"
+ 		RDEPEND+="${RDEPEND:+ }${E_RDEPEND}"
+ 		PDEPEND+="${PDEPEND:+ }${E_PDEPEND}"
++		HDEPEND+="${HDEPEND:+ }${E_HDEPEND}"
++		CROSS_HDEPEND+="${CROSS_HDEPEND:+ }${E_CROSS_HDEPEND}"
+ 		REQUIRED_USE+="${REQUIRED_USE:+ }${E_REQUIRED_USE}"
+ 		
+-		unset ECLASS E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND \
+-			__INHERITED_QA_CACHE
++		unset ECLASS E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND E_HDEPEND \
++			E_CROSS_HDEPEND __INHERITED_QA_CACHE
+ 
+ 		# alphabetically ordered by $EBUILD_PHASE value
+ 		case "$EAPI" in
+@@ -670,9 +685,16 @@
+ 
+ 	auxdbkeys="DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE
+ 		DESCRIPTION KEYWORDS INHERITED IUSE REQUIRED_USE PDEPEND PROVIDE EAPI
+-		PROPERTIES DEFINED_PHASES UNUSED_05 UNUSED_04
++		PROPERTIES DEFINED_PHASES HDEPEND CROSS_HDEPEND
+ 		UNUSED_03 UNUSED_02 UNUSED_01"
+ 
++	case "$EAPI" in
++		0|1|2|3|4)
++			unset HDEPEND
++			unset CROSS_HDEPEND
++			;;
++	esac
++
+ 	# The extra $(echo) commands remove newlines.
+ 	if [ -n "${dbkey}" ] ; then
+ 		> "${dbkey}"
+diff -urN portage-2.1.11.17/pym/_emerge/depgraph.py portage-2.1.11.17.new/pym/_emerge/depgraph.py
+--- portage-2.1.11.17/pym/_emerge/depgraph.py	2012-09-14 04:39:24.000000000 +0200
++++ portage-2.1.11.17.new/pym/_emerge/depgraph.py	2012-09-16 21:32:01.752234568 +0200
+@@ -503,7 +503,7 @@
+ 
+ 	pkg_tree_map = RootConfig.pkg_tree_map
+ 
+-	_dep_keys = ["DEPEND", "RDEPEND", "PDEPEND"]
++	_dep_keys = ["DEPEND", "RDEPEND", "PDEPEND", "HDEPEND", "CROSS_HDEPEND"]
+ 	
+ 	def __init__(self, settings, trees, myopts, myparams, spinner,
+ 		frozen_config=None, backtrack_parameters=BacktrackParameter(), allow_backtracking=False):
+@@ -1682,7 +1682,7 @@
+ 		removal_action = "remove" in self._dynamic_config.myparams
+ 
+ 		edepend={}
+-		depkeys = ["DEPEND","RDEPEND","PDEPEND"]
++		depkeys = ["DEPEND","RDEPEND","PDEPEND","HDEPEND","CROSS_HDEPEND"]
+ 		for k in depkeys:
+ 			edepend[k] = metadata[k]
+ 
+@@ -1710,18 +1710,32 @@
+ 			# Removal actions never traverse ignored buildtime
+ 			# dependencies, so it's safe to discard them early.
+ 			edepend["DEPEND"] = ""
++			edepend["HDEPEND"] = ""
++			edepend["CROSS_HDEPEND"] = ""
+ 			ignore_build_time_deps = True
++			
++		is_crosscompile = self._frozen_config.myopts.get("--crosscompile")
+ 
+ 		if removal_action:
+ 			depend_root = myroot
+ 		else:
+-			depend_root = self._frozen_config._running_root.root
+-			root_deps = self._frozen_config.myopts.get("--root-deps")
+-			if root_deps is not None:
+-				if root_deps is True:
++			if pkg.metadata['EAPI'] not in ('0', '1', '2', '3', '4'):
++				# For ebuilds that have EAPI 5 or later, --root-deps
++				# has no effect, since DEPEND has been divided into two parts:
++				# DEPEND for build-time target dependencies, and HDEPEND for
++				# build-time host dependencies.
++				if is_crosscompile:
+ 					depend_root = myroot
+-				elif root_deps == "rdeps":
+-					ignore_build_time_deps = True
++				else:
++					depend_root = self._frozen_config._running_root.root
++			else:
++				depend_root = self._frozen_config._running_root.root
++				root_deps = self._frozen_config.myopts.get("--root-deps")
++				if root_deps is not None:
++					if root_deps is True:
++						depend_root = myroot
++					elif root_deps == "rdeps":
++						ignore_build_time_deps = True
+ 
+ 		# If rebuild mode is not enabled, it's safe to discard ignored
+ 		# build-time dependencies. If you want these deps to be traversed
+@@ -1729,6 +1743,8 @@
+ 		if ignore_build_time_deps and \
+ 			not self._rebuild.rebuild:
+ 			edepend["DEPEND"] = ""
++			edepend["HDEPEND"] = ""
++			edepend["CROSS_HDEPEND"] = ""
+ 
+ 		deps = (
+ 			(depend_root, edepend["DEPEND"],
+@@ -1738,7 +1754,15 @@
+ 			(myroot, edepend["RDEPEND"],
+ 				self._priority(runtime=True)),
+ 			(myroot, edepend["PDEPEND"],
+-				self._priority(runtime_post=True))
++				self._priority(runtime_post=True)),
++			(self._frozen_config._running_root.root, edepend["HDEPEND"],
++				self._priority(buildtime=True,
++				optional=(pkg.built or ignore_build_time_deps),
++				ignored=ignore_build_time_deps)),
++			(self._frozen_config._running_root.root, edepend["CROSS_HDEPEND"],
++				self._priority(buildtime=True,
++				optional=(pkg.built or ignore_build_time_deps),
++				ignored=(ignore_build_time_deps or not is_crosscompile)))
+ 		)
+ 
+ 		debug = "--debug" in self._frozen_config.myopts
+@@ -2835,7 +2859,7 @@
+ 			return [pkg.slot_atom for pkg in greedy_pkgs]
+ 
+ 		blockers = {}
+-		blocker_dep_keys = ["DEPEND", "PDEPEND", "RDEPEND"]
++		blocker_dep_keys = ["DEPEND", "PDEPEND", "RDEPEND", "HDEPEND", "CROSS_HDEPEND"]
+ 		for pkg in greedy_pkgs + [highest_pkg]:
+ 			dep_str = " ".join(pkg.metadata[k] for k in blocker_dep_keys)
+ 			try:
+@@ -3096,7 +3120,7 @@
+ 
+ 		if target_atom is not None and isinstance(node, Package):
+ 			affecting_use = set()
+-			for dep_str in "DEPEND", "RDEPEND", "PDEPEND":
++			for dep_str in "DEPEND", "RDEPEND", "PDEPEND", "HDEPEND", "CROSS_HDEPEND":
+ 				try:
+ 					affecting_use.update(extract_affecting_use(
+ 						node.metadata[dep_str], target_atom,
+@@ -3180,10 +3204,14 @@
+ 					dep_strings.add(node.metadata["DEPEND"])
+ 					dep_strings.add(node.metadata["RDEPEND"])
+ 					dep_strings.add(node.metadata["PDEPEND"])
++					dep_strings.add(node.metadata["HDEPEND"])
++					dep_strings.add(node.metadata["CROSS_HDEPEND"])
+ 				else:
+ 					for priority in priorities:
+ 						if priority.buildtime:
+ 							dep_strings.add(node.metadata["DEPEND"])
++							dep_strings.add(node.metadata["HDEPEND"])
++							dep_strings.add(node.metadata["CROSS_HDEPEND"])
+ 						if priority.runtime:
+ 							dep_strings.add(node.metadata["RDEPEND"])
+ 						if priority.runtime_post:
+@@ -4126,7 +4154,7 @@
+ 			if pkg not in self._dynamic_config.digraph.nodes:
+ 				return False
+ 
+-			for key in "DEPEND", "RDEPEND", "PDEPEND", "LICENSE":
++			for key in "DEPEND", "RDEPEND", "PDEPEND", "HDEPEND", "CROSS_HDEPEND", "LICENSE":
+ 				dep = pkg.metadata[key]
+ 				old_val = set(portage.dep.use_reduce(dep, pkg.use.enabled, is_valid_flag=pkg.iuse.is_valid_flag, flat=True))
+ 				new_val = set(portage.dep.use_reduce(dep, new_use, is_valid_flag=pkg.iuse.is_valid_flag, flat=True))
+diff -urN portage-2.1.11.17/pym/_emerge/main.py portage-2.1.11.17.new/pym/_emerge/main.py
+--- portage-2.1.11.17/pym/_emerge/main.py	2012-09-14 04:39:24.000000000 +0200
++++ portage-2.1.11.17.new/pym/_emerge/main.py	2012-09-16 20:57:50.079285982 +0200
+@@ -489,6 +489,7 @@
+ 		"--use-ebuild-visibility": y_or_n,
+ 		'--usepkg'               : y_or_n,
+ 		'--usepkgonly'           : y_or_n,
++		'--crosscompile'         : y_or_n,
+ 	}
+ 
+ 	if _ENABLE_DYN_LINK_MAP:
+@@ -975,6 +976,11 @@
+ 			"choices"  : true_y_or_n
+ 		},
+ 
++		"--crosscompile": {
++			"help"     : "cross compile mode",
++			"type"     : "choice",
++			"choices"  : true_y_or_n
++		},
+ 	}
+ 
+ 	if _ENABLE_DYN_LINK_MAP:
+diff -urN portage-2.1.11.17/pym/portage/dbapi/bintree.py portage-2.1.11.17.new/pym/portage/dbapi/bintree.py
+--- portage-2.1.11.17/pym/portage/dbapi/bintree.py	2012-09-14 04:39:24.000000000 +0200
++++ portage-2.1.11.17.new/pym/portage/dbapi/bintree.py	2012-09-16 21:21:15.326250768 +0200
+@@ -75,6 +75,7 @@
+ 			["BUILD_TIME", "CHOST", "DEPEND", "EAPI", "IUSE", "KEYWORDS",
+ 			"LICENSE", "PDEPEND", "PROPERTIES", "PROVIDE",
+ 			"RDEPEND", "repository", "RESTRICT", "SLOT", "USE", "DEFINED_PHASES",
++			"HDEPEND", "CROSS_HDEPEND",
+ 			])
+ 		self._aux_cache_slot_dict = slot_dict_class(self._aux_cache_keys)
+ 		self._aux_cache = {}
+@@ -304,11 +305,11 @@
+ 				["BUILD_TIME", "CHOST", "DEPEND", "DESCRIPTION", "EAPI",
+ 				"IUSE", "KEYWORDS", "LICENSE", "PDEPEND", "PROPERTIES",
+ 				"PROVIDE", "RDEPEND", "repository", "SLOT", "USE", "DEFINED_PHASES",
+-				"BASE_URI"]
++				"BASE_URI", "HDEPEND", "CROSS_HDEPEND"]
+ 			self._pkgindex_aux_keys = list(self._pkgindex_aux_keys)
+ 			self._pkgindex_use_evaluated_keys = \
+ 				("LICENSE", "RDEPEND", "DEPEND",
+-				"PDEPEND", "PROPERTIES", "PROVIDE")
++				"PDEPEND", "PROPERTIES", "PROVIDE", "HDEPEND", "CROSS_HDEPEND")
+ 			self._pkgindex_header_keys = set([
+ 				"ACCEPT_KEYWORDS", "ACCEPT_LICENSE",
+ 				"ACCEPT_PROPERTIES", "CBUILD",
+@@ -330,6 +331,8 @@
+ 				"SLOT"    : "0",
+ 				"USE"     : "",
+ 				"DEFINED_PHASES" : "",
++				"HDEPEND" : "",
++				"CROSS_HDEPEND" : "",
+ 			}
+ 			self._pkgindex_inherited_keys = ["CHOST", "repository"]
+ 
+diff -urN portage-2.1.11.17/pym/portage/dbapi/porttree.py portage-2.1.11.17.new/pym/portage/dbapi/porttree.py
+--- portage-2.1.11.17/pym/portage/dbapi/porttree.py	2012-09-14 04:39:24.000000000 +0200
++++ portage-2.1.11.17.new/pym/portage/dbapi/porttree.py	2012-09-16 21:21:50.867249877 +0200
+@@ -189,7 +189,8 @@
+ 		self._aux_cache_keys = set(
+ 			["DEPEND", "EAPI", "INHERITED", "IUSE", "KEYWORDS", "LICENSE",
+ 			"PDEPEND", "PROPERTIES", "PROVIDE", "RDEPEND", "repository",
+-			"RESTRICT", "SLOT", "DEFINED_PHASES", "REQUIRED_USE"])
++			"RESTRICT", "SLOT", "DEFINED_PHASES", "REQUIRED_USE", "HDEPEND",
++			"CROSS_HDEPEND"])
+ 
+ 		self._aux_cache = {}
+ 		self._broken_ebuilds = set()
+diff -urN portage-2.1.11.17/pym/portage/dbapi/vartree.py portage-2.1.11.17.new/pym/portage/dbapi/vartree.py
+--- portage-2.1.11.17/pym/portage/dbapi/vartree.py	2012-09-14 04:39:24.000000000 +0200
++++ portage-2.1.11.17.new/pym/portage/dbapi/vartree.py	2012-09-16 21:20:34.074251801 +0200
+@@ -165,6 +165,7 @@
+ 			"EAPI", "HOMEPAGE", "IUSE", "KEYWORDS",
+ 			"LICENSE", "PDEPEND", "PROPERTIES", "PROVIDE", "RDEPEND",
+ 			"repository", "RESTRICT" , "SLOT", "USE", "DEFINED_PHASES",
++			"HDEPEND", "CROSS_HDEPEND",
+ 			])
+ 		self._aux_cache_obj = None
+ 		self._aux_cache_filename = os.path.join(self._eroot,
+diff -urN portage-2.1.11.17/pym/portage/__init__.py portage-2.1.11.17.new/pym/portage/__init__.py
+--- portage-2.1.11.17/pym/portage/__init__.py	2012-09-14 04:40:15.000000000 +0200
++++ portage-2.1.11.17.new/pym/portage/__init__.py	2012-09-16 21:20:08.176252450 +0200
+@@ -414,7 +414,7 @@
+ 
+ _doebuild_manifest_exempt_depend = 0
+ 
+-_testing_eapis = frozenset(["4-python", "4-slot-abi", "5_pre2"])
++_testing_eapis = frozenset(["4-python", "4-slot-abi", "4-hdepend", "5_pre2"])
+ _deprecated_eapis = frozenset(["4_pre1", "3_pre2", "3_pre1", "5_pre1"])
+ 
+ def _eapi_is_deprecated(eapi):
+@@ -472,7 +472,7 @@
+ 	'RESTRICT',  'HOMEPAGE',  'LICENSE',   'DESCRIPTION',
+ 	'KEYWORDS',  'INHERITED', 'IUSE', 'REQUIRED_USE',
+ 	'PDEPEND',   'PROVIDE', 'EAPI',
+-	'PROPERTIES', 'DEFINED_PHASES', 'UNUSED_05', 'UNUSED_04',
++	'PROPERTIES', 'DEFINED_PHASES', 'HDEPEND', 'CROSS_HDEPEND',
+ 	'UNUSED_03', 'UNUSED_02', 'UNUSED_01',
+ )
+ auxdbkeylen=len(auxdbkeys)

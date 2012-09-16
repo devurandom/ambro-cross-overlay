@@ -23,7 +23,7 @@ fi
 if [[ -z "${_PYTHON_ECLASS_INHERITED}" ]]; then
 _PYTHON_ECLASS_INHERITED="1"
 
-if ! has "${EAPI:-0}" 0 1 2 3 4; then
+if ! has "${EAPI:-0}" 0 1 2 3 4 4-hdepend; then
 	die "API of python.eclass in EAPI=\"${EAPI}\" not established"
 fi
 
@@ -113,7 +113,7 @@ _python_implementation() {
 }
 
 _python_package_supporting_installation_for_multiple_python_abis() {
-	if has "${EAPI:-0}" 0 1 2 3 4; then
+	if has "${EAPI:-0}" 0 1 2 3 4 4-hdepend; then
 		if [[ -n "${SUPPORT_PYTHON_ABIS}" ]]; then
 			return 0
 		else
@@ -245,22 +245,34 @@ _python_parse_PYTHON_DEPEND() {
 
 		unset -f _append_accepted_versions_range
 
+		local depend
 		if [[ "${#_PYTHON_ATOMS[@]}" -gt 1 ]]; then
-			DEPEND+="${DEPEND:+ }${USE_flag}${USE_flag:+? ( }|| ( ${_PYTHON_ATOMS[@]} )${USE_flag:+ )}"
-			RDEPEND+="${RDEPEND:+ }${USE_flag}${USE_flag:+? ( }|| ( ${_PYTHON_ATOMS[@]} )${USE_flag:+ )}"
+			depend="${USE_flag}${USE_flag:+? ( }|| ( ${_PYTHON_ATOMS[@]} )${USE_flag:+ )}"
 		else
-			DEPEND+="${DEPEND:+ }${USE_flag}${USE_flag:+? ( }${_PYTHON_ATOMS[@]}${USE_flag:+ )}"
-			RDEPEND+="${RDEPEND:+ }${USE_flag}${USE_flag:+? ( }${_PYTHON_ATOMS[@]}${USE_flag:+ )}"
+			depend="${USE_flag}${USE_flag:+? ( }${_PYTHON_ATOMS[@]}${USE_flag:+ )}"
 		fi
+
+		if [[ $EAPI = 4-hdepend ]]; then
+			HDEPEND+="${HDEPEND:+ }${depend}"
+		else
+			DEPEND+="${DEPEND:+ }${depend}"
+		fi
+		RDEPEND+="${RDEPEND:+ }${depend}"
 	else
 		die "Invalid syntax of PYTHON_DEPEND"
 	fi
 }
 
 if _python_implementation; then
-	DEPEND=">=app-admin/eselect-python-20091230"
-	RDEPEND="${DEPEND}"
+	RDEPEND=">=app-admin/eselect-python-20091230"
 	PDEPEND="app-admin/python-updater"
+
+	if [[ $EAPI = 4-hdepend ]]; then
+		HDEPEND="${RDEPEND}"
+		DEPEND=""
+	else
+		DEPEND="${RDEPEND}"
+	fi
 fi
 
 if [[ -n "${PYTHON_DEPEND}" ]]; then
@@ -752,7 +764,7 @@ if ! has "${EAPI:-0}" 0 1; then
 	fi
 fi
 
-if has "${EAPI:-0}" 0 1 2 3 4; then
+if has "${EAPI:-0}" 0 1 2 3 4 4-hdepend; then
 	unset PYTHON_ABIS
 fi
 
@@ -763,7 +775,7 @@ _python_calculate_PYTHON_ABIS() {
 
 	_python_initial_sanity_checks
 
-	if [[ "$(declare -p PYTHON_ABIS 2> /dev/null)" != "declare -x PYTHON_ABIS="* ]] && has "${EAPI:-0}" 0 1 2 3 4; then
+	if [[ "$(declare -p PYTHON_ABIS 2> /dev/null)" != "declare -x PYTHON_ABIS="* ]] && has "${EAPI:-0}" 0 1 2 3 4 4-hdepend; then
 		local PYTHON_ABI
 
 		if [[ "$(declare -p USE_PYTHON 2> /dev/null)" == "declare -x USE_PYTHON="* ]]; then

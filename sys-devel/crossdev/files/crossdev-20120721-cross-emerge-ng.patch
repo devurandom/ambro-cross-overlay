@@ -1,0 +1,72 @@
+diff -urN crossdev-20120721.old/wrappers/Makefile crossdev-20120721/wrappers/Makefile
+--- crossdev-20120721.old/wrappers/Makefile	2012-09-17 00:01:41.392848826 +0200
++++ crossdev-20120721/wrappers/Makefile	2012-09-17 00:14:15.859737678 +0200
+@@ -4,7 +4,7 @@
+ include ../settings.mk
+ 
+ PORTDIR ?= $(shell portageq envvar PORTDIR)
+-FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper
++FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper cross-emerge-ng cross-wrapper
+ SITE = $(PREFIX)/share/crossdev/include/site
+ TOPDIR =
+ 
+@@ -16,8 +16,12 @@
+ 	cp -a etc $(DESTDIR)/$(PREFIX)/share/crossdev/
+ 	cp -a site $(DESTDIR)/$(PREFIX)/share/crossdev/include/
+ 	sed -i -e s@__PREFIX__@$(PREFIX)@g $(DESTDIR)/$(PREFIX)/bin/emerge-wrapper
++	sed -i -e s@__PREFIX__@$(PREFIX)@g $(DESTDIR)/$(PREFIX)/bin/cross-emerge-ng
+ 	sed -i -e s@__TOPDIR__@$(SITE)@g $(DESTDIR)/$(SITE)/config.site
+ 	mv $(DESTDIR)/$(SITE)/config.site $(DESTDIR)/$(PREFIX)/share/
+ 	ln -sf $(PORTDIR)/profiles/embedded $(DESTDIR)/$(PREFIX)/share/crossdev/etc/make.profile
++	
++	ln -s cross-wrapper $(DESTDIR)/$(PREFIX)/bin/cross-gcc
++	ln -s cross-wrapper $(DESTDIR)/$(PREFIX)/bin/cross-g++
+ 
+ .PHONY: all install
+diff -urN crossdev-20120721.old/wrappers/cross-emerge-ng crossdev-20120721/wrappers/cross-emerge-ng
+--- crossdev-20120721.old/wrappers/cross-emerge-ng	1970-01-01 01:00:00.000000000 +0100
++++ crossdev-20120721/wrappers/cross-emerge-ng	2012-09-17 00:13:11.218522112 +0200
+@@ -0,0 +1,18 @@
++#!/bin/bash
++
++if [[ -z $SYSROOT ]]; then
++	echo "ERROR: You have to set SYSROOT to use cross-emerge-ng!"
++	exit 1
++fi
++
++export CBUILD=$(portageq envvar CHOST)
++export PORTAGE_CONFIGROOT="$SYSROOT"
++export ROOT="$SYSROOT"
++export CROSS_CHOST=$(portageq envvar CHOST)
++
++if [[ -z $DONT_WRAP_COMPILERS ]]; then
++        export CC="__PREFIX__/bin/cross-gcc"
++        export CXX="__PREFIX__/bin/cross-g++"
++fi
++
++exec emerge --crosscompile "$@"
+diff -urN crossdev-20120721.old/wrappers/cross-wrapper crossdev-20120721/wrappers/cross-wrapper
+--- crossdev-20120721.old/wrappers/cross-wrapper	1970-01-01 01:00:00.000000000 +0100
++++ crossdev-20120721/wrappers/cross-wrapper	2012-09-17 00:08:29.506717992 +0200
+@@ -0,0 +1,9 @@
++#!/bin/bash
++
++if [[ -z ${CROSS_CHOST} || -z ${SYSROOT} ]]; then
++	echo "ERROR: You have to set CROSS_CHOST and SYSROOT to use cross compiler wrappers!"
++	echo "You should use cross-emerge-ng which sets this."
++	exit 1
++fi
++
++exec "${CROSS_CHOST}-g${0:$[-2]}" --sysroot "${SYSROOT}" "$@"
+diff -urN crossdev-20120721.old/wrappers/site/linux crossdev-20120721/wrappers/site/linux
+--- crossdev-20120721.old/wrappers/site/linux	2012-09-17 00:01:41.391848698 +0200
++++ crossdev-20120721/wrappers/site/linux	2012-09-17 00:09:45.970436124 +0200
+@@ -49,3 +49,8 @@
+ screen_cv_sys_sockets_nofs=${screen_cv_sys_sockets_nofs=no}
+ screen_cv_sys_sockets_usable=${screen_cv_sys_sockets_usable=yes}
+ screen_cv_sys_terminfo_used=${screen_cv_sys_terminfo_used=yes}
++
++# python
++ac_cv_have_long_long_format=${ac_cv_have_long_long_format=yes}
++ac_cv_buggy_getaddrinfo=${ac_cv_buggy_getaddrinfo=no}
++ac_cv_computed_gotos=${ac_cv_computed_gotos=yes}

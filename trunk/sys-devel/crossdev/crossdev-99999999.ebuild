@@ -5,7 +5,7 @@
 EAPI="4"
 
 if [[ ${PV} == "99999999" ]] ; then
-	EGIT_REPO_URI="git://git.overlays.gentoo.org/proj/crossdev.git"
+	EGIT_REPO_URI="git://github.com/devurandom/crossdev.git"
 	inherit git-2
 	SRC_URI=""
 	#KEYWORDS=""

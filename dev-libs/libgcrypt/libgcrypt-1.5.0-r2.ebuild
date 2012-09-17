@@ -23,6 +23,8 @@ DEPEND="${RDEPEND}"
 DOCS=( AUTHORS ChangeLog NEWS README THANKS TODO )
 
 src_prepare() {
+	epatch "${FILESDIR}"/${P}-0001-Generate-and-install-a-pkg-config-file.patch
+	epatch "${FILESDIR}"/${P}-0002-Use-pkg-config-to-find-gpg-error.patch
 	epatch "${FILESDIR}"/${P}-uscore.patch
 	epatch "${FILESDIR}"/${PN}-multilib-syspath.patch
 	epatch "${WORKDIR}"/${P}-idea.patch

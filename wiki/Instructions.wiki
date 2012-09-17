@@ -1,0 +1,136 @@
+Here are instructions for cross-compiling an ARM Gentoo root filesystem (ideally equivalent to stage3).
+
+= Install patched packages =
+
+First add this overlay (the SVN repository) to your Gentoo system. E.g. to check it out directly from SVN:
+
+{{{
+cd /usr/local
+svn checkout https://ambro-cross-overlay.googlecode.com/svn/trunk/ ambro-cross-overlay
+}}}
+
+Then register it in /etc/make.conf:
+
+{{{
+PORTDIR_OVERLAY="
+<other stuff>
+/usr/local/ambro-cross-overlay
+"
+}}}
+
+Then reinstall the following packages, and make sure you have the right version and they come *from this overlay*:
+
+  * portage-2.1.11.17
+  * crossdev-20120721
+  * python-3.2.3
+
+Note than you first have to install portage, so that the python ebuild which uses HDEPEND will work:
+
+{{{
+emerge -av1 =sys-apps/portage-2.1.11.17::ambro-cross
+emerge -av1 =sys-devel/crossdev-20120721::ambro-cross =dev-lang/python-3.2.3::ambro-cross
+}}}
+
+= Build a cross toolchain =
+
+If you haven't done so yet, create an overlay for crossdev to put toolchain packages inside.
+
+{{{
+mkdir /usr/local/portage-crossdev
+}}}
+
+Then add it to /etc/make.conf, and make sure it's the first one. This is because crossdev will just pick the first directory in PORTDIR_OVERLAY and write its stuff into.
+
+{{{
+PORTDIR_OVERLAY="
+/usr/local/portage-crossdev
+<other stuff>
+/usr/local/ambro-cross-overlay
+"
+}}}
+
+Now you can use crossdev to build a toolchain for cross compilation. With the architecture choices used here, the result will be able to run on the [http://www.raspberrypi.org/ Raspberry Pi].
+
+{{{
+crossdev --stable armv6j-hardfloat-linux-gnueabi
+}}}
+
+Note the stable part; I have only patched stable versions of various packages to cross-compile. In any case, the stable/unstable choice here has to match with what versions of {linux-headers,gcc,glibc} will be installed into the target system.
+
+= Set up the cross prefix =
+
+Choose an empty folder where the target system will be built. *Do not use /usr/CHOST*; we will build a clean system. Create this directory and export it to the environment variable SYSROOT.
+
+{{{
+mkdir /mnt/cross-arm
+export SYSROOT=/mnt/cross-arm
+}}}
+
+Now we set up some configuration for Portage.
+
+{{{
+mkdir -p ${SYSROOT}/etc/portage
+ln -s /usr/portage/profiles/default/linux/arm ${SYSROOT}/etc/make.profile
+}}}
+
+Create ${SYSROOT}/etc/make.conf. Make sure to adjust the overlay path.
+{{{
+ACCEPT_KEYWORDS="arm"
+ARCH="arm"
+CHOST="armv6j-hardfloat-linux-gnueabi"
+CFLAGS="-O2 -pipe -march=armv6j -mfpu=vfp -mfloat-abi=hard"
+CXXFLAGS="${CFLAGS}"
+MAKEOPTS="-j5"
+USE="arm symlink"
+PORTDIR_OVERLAY="/usr/local/ambro-cross-overlay"
+}}}
+
+Create ${SYSROOT}/etc/portage/package.keywords:
+{{{
+# use new versions which do not install .la files
+dev-libs/mpfr
+dev-libs/mpc
+# use new versions to fix cross compile
+sys-apps/util-linux
+sys-apps/groff
+sys-apps/sysvinit # not broken, dependency only
+}}}
+
+= Bootstrap the system =
+
+Install baselayout with the build use flag, in order to create a basic directory structure. Make sure to use my *cross-emerge-ng* emerge wrapper. Later, baselayout will be reinstalled without this flag.
+
+{{{
+USE=build cross-emerge-ng --nodeps -av1 sys-apps/baselayout
+}}}
+
+Now we build a libc into the target. This will use the headers and libraries which came with the cross compiler (in /usr/CHOST).
+
+{{{
+DONT_WRAP_COMPILERS=1 cross-emerge-ng -av1 sys-kernel/linux-headers sys-libs/glibc
+}}}
+
+The DONT_WRAP_COMPILERS variable tells cross-emerge-ng not to set CC and CXX to /usr/bin/cross-g{cc,++}. However, from this point on, we will use those wrappers. The only thing they do is prepend "--sysroot ${SYSROOT}" to compiler arguments to make sure they're looking for headers and libraries within SYSROOT, and nowhere else.
+
+Now we install the rest of the system.
+
+{{{
+cross-emerge-ng -av1uN @system
+}}}
+
+Once everything is installed, the only thing left is to regenerate the linker cache. This is needed because emerge doesn't do it automatically when cross compiling, for some unknown reason. If you forget to do this, programs will fail to start, complaining of missing libraries.
+
+{{{
+ROOT=$SYSROOT eselect env update
+}}}
+
+What you have now in SYSROOT should be pretty close to a stage3 produced by Catalyst - except that this was made completely via cross-compilation and without chrooting.
+
+= Known problems =
+
+User and group accounts are not added by ebuilds. This in particular prevents sshd from starting. To fix it from a booted system or chroot:
+
+{{{
+groupadd -g 22 sshd
+useradd -g 22 sshd -d /var/empty -s /sbin/nologin
+}}}

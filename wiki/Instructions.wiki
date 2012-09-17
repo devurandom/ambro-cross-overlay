@@ -39,7 +39,7 @@ If you haven't done so yet, create an overlay for crossdev to put toolchain pack
 mkdir /usr/local/portage-crossdev
 }}}
 
-Then add it to /etc/make.conf, and make sure it's the first one. This is because crossdev will just pick the first directory in PORTDIR_OVERLAY and write its stuff into.
+Then add it to /etc/make.conf:
 
 {{{
 PORTDIR_OVERLAY="
@@ -49,13 +49,17 @@ PORTDIR_OVERLAY="
 "
 }}}
 
-Now you can use crossdev to build a toolchain for cross compilation. With the architecture choices used here, the result will be able to run on the [http://www.raspberrypi.org/ Raspberry Pi].
+Now build the cross-compilation toolchain using crossdev:
 
 {{{
-crossdev --stable armv6j-hardfloat-linux-gnueabi
+crossdev --ov-output /usr/local/portage-crossdev --stable armv6j-hardfloat-linux-gnueabi
 }}}
 
-Note the stable part; I have only patched stable versions of various packages to cross-compile. In any case, the stable/unstable choice here has to match with what versions of {linux-headers,gcc,glibc} will be installed into the target system.
+*--ov-output*: crossdev claims it outputs to the last directory in PORTDIR_OVERLAY, but that is wrong. Hence we specifically instruct it to output into the portage-crossdev directory. 
+
+*--stable*: I have only patched stable versions of various packages to cross-compile. In any case, the stable/unstable choice here has to match with what versions of {linux-headers,gcc,glibc} will be installed into the target system.
+
+Now you can use crossdev to build a toolchain for cross compilation. With the architecture choices used here, the result will be able to run on the [http://www.raspberrypi.org/ Raspberry Pi].
 
 = Set up the cross prefix =
 

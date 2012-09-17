@@ -6,4 +6,4 @@ if [[ -z ${CROSS_CHOST} || -z ${SYSROOT} ]]; then
 	exit 1
 fi
 
-exec "${CROSS_CHOST}-g${0:$[-2]}" --sysroot "${SYSROOT}" "$@"
+exec "${CROSS_CHOST}-${0##*-}" --sysroot "${SYSROOT}" "$@"

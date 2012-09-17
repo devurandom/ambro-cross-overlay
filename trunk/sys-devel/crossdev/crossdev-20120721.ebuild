@@ -30,8 +30,8 @@ RDEPEND=">=sys-apps/portage-2.1
 DEPEND="app-arch/xz-utils"
 
 src_prepare() {
-	cp "${FILESDIR}"/cross-emerge-ng "${S}"
-	cp "${FILESDIR}"/cross-wrapper "${S}"
+	cp "${FILESDIR}"/cross-emerge-ng "${S}"/wrappers || die
+	cp "${FILESDIR}"/toolchain-wrapper "${S}"/wrappers || die
 	epatch "${FILESDIR}"/crossdev-20120721-cross-emerge-ng.patch
 	epatch "${FILESDIR}"/crossdev-20120721-python.patch
 }

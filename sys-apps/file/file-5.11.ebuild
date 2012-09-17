@@ -49,6 +49,8 @@ src_configure() {
 	if tc-is-cross-compiler && ! ROOT=/ has_version ~${CATEGORY}/${P} ; then
 		ac_cv_header_zlib_h=no \
 		ac_cv_lib_z_gzopen=no \
+		CC=${BUILD_CC} \
+		CXX=${BUILD_CXX} \
 		CHOST=${CBUILD} \
 		CFLAGS=${BUILD_CFLAGS} \
 		CXXFLAGS=${BUILD_CXXFLAGS} \

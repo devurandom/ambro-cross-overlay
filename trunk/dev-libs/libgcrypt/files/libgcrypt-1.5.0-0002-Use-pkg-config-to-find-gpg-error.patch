@@ -1,0 +1,32 @@
+From 546df5ee190dcbbdd6de32f3cc167cb74ca38f1d Mon Sep 17 00:00:00 2001
+From: Dennis Schridde <devurandom@gmx.net>
+Date: Mon, 17 Sep 2012 23:04:55 +0200
+Subject: [PATCH 2/2] Use pkg-config to find gpg-error
+
+---
+ configure.ac | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index fc404a0..c3487d2 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -586,14 +586,7 @@ AC_DEFINE_UNQUOTED(NAME_OF_DEV_URANDOM, "$NAME_OF_DEV_URANDOM",
+ #
+ # gpg-error is required.
+ #
+-AM_PATH_GPG_ERROR("$NEED_GPG_ERROR_VERSION")
+-if test "x$GPG_ERROR_LIBS" = "x"; then
+-  AC_MSG_ERROR([libgpg-error is needed.
+-                See ftp://ftp.gnupg.org/gcrypt/libgpg-error/ .])
+-fi
+-
+-AC_DEFINE(GPG_ERR_SOURCE_DEFAULT, GPG_ERR_SOURCE_GCRYPT,
+-          [The default error source for libgcrypt.])
++PKG_CHECK_MODULES([GPG_ERROR], [libgpg-error >= $NEED_GPG_ERROR_VERSION])
+ 
+ #
+ # Check whether the GNU Pth library is available.  We require this
+-- 
+1.7.12
+

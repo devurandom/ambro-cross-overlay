@@ -1,0 +1,58 @@
+From 1eebaaf6a1710a133e3f10628bada79cf6bafdbc Mon Sep 17 00:00:00 2001
+From: Dennis Schridde <devurandom@gmx.net>
+Date: Mon, 17 Sep 2012 23:01:36 +0200
+Subject: [PATCH 1/2] Generate and install a pkg-config file
+
+---
+ configure.ac        |  1 +
+ src/Makefile.am     |  3 +++
+ src/libgcrypt.pc.in | 11 +++++++++++
+ 3 files changed, 15 insertions(+)
+ create mode 100644 src/libgcrypt.pc.in
+
+diff --git a/configure.ac b/configure.ac
+index cf4a082..fc404a0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1241,6 +1241,7 @@ doc/Makefile
+ src/Makefile
+ src/gcrypt.h
+ src/libgcrypt-config
++src/libgcrypt.pc
+ src/versioninfo.rc
+ tests/Makefile
+ ])
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 2a07067..67564c6 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -28,6 +28,9 @@ m4datadir = $(datadir)/aclocal
+ m4data_DATA = libgcrypt.m4
+ include_HEADERS = gcrypt.h
+ 
++pkgconfigdir = $(libdir)/pkgconfig
++pkgconfig_DATA = libgcrypt.pc
++
+ lib_LTLIBRARIES = libgcrypt.la
+ bin_PROGRAMS = dumpsexp hmac256
+ if USE_RANDOM_DAEMON
+diff --git a/src/libgcrypt.pc.in b/src/libgcrypt.pc.in
+new file mode 100644
+index 0000000..1da2e1a
+--- /dev/null
++++ b/src/libgcrypt.pc.in
+@@ -0,0 +1,11 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libgcrypt
++Description: The GNU crypto library
++Version: @VERSION@
++Requires: libgpg-error
++Libs: @LIBGCRYPT_CONFIG_LIBS@
++Cflags: @LIBGCRYPT_CONFIG_CFLAGS@
+-- 
+1.7.12
+

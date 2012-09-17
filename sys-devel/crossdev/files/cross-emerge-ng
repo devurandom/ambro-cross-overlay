@@ -11,8 +11,8 @@ export ROOT="$SYSROOT"
 export CROSS_CHOST=$(portageq envvar CHOST)
 
 if [[ -z $DONT_WRAP_COMPILERS ]]; then
-        export CC="__PREFIX__/bin/cross-gcc"
-        export CXX="__PREFIX__/bin/cross-g++"
+        export CC="__PREFIX__/bin/cbuild-gcc"
+        export CXX="__PREFIX__/bin/cbuild-g++"
 fi
 
 exec emerge --crosscompile "$@"

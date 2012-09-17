@@ -6,7 +6,7 @@ diff -urN crossdev-20120721.old/wrappers/Makefile crossdev-20120721/wrappers/Mak
  
  PORTDIR ?= $(shell portageq envvar PORTDIR)
 -FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper
-+FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper cross-emerge-ng cross-wrapper
++FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper cross-emerge-ng toolchain-wrapper
  SITE = $(PREFIX)/share/crossdev/include/site
  TOPDIR =
  
@@ -19,7 +19,7 @@ diff -urN crossdev-20120721.old/wrappers/Makefile crossdev-20120721/wrappers/Mak
  	mv $(DESTDIR)/$(SITE)/config.site $(DESTDIR)/$(PREFIX)/share/
  	ln -sf $(PORTDIR)/profiles/embedded $(DESTDIR)/$(PREFIX)/share/crossdev/etc/make.profile
 +	
-+	ln -s cross-wrapper $(DESTDIR)/$(PREFIX)/bin/cross-gcc
-+	ln -s cross-wrapper $(DESTDIR)/$(PREFIX)/bin/cross-g++
++	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/cbuild-gcc
++	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/cbuild-g++
  
  .PHONY: all install

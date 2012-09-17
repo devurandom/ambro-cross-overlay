@@ -1,0 +1,57 @@
+From b9fff47b0620dd583a0a333b39ed189c250a1b53 Mon Sep 17 00:00:00 2001
+From: Dennis Schridde <devurandom@gmx.net>
+Date: Mon, 17 Sep 2012 23:01:55 +0200
+Subject: [PATCH] Generate and install a pkg-config file
+
+---
+ configure.ac           |  1 +
+ src/Makefile.am        |  3 +++
+ src/libgpg-error.pc.in | 10 ++++++++++
+ 3 files changed, 14 insertions(+)
+ create mode 100644 src/libgpg-error.pc.in
+
+diff --git a/configure.ac b/configure.ac
+index ee42f9e..f1a9d73 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -192,6 +192,7 @@ AC_CONFIG_FILES([src/Makefile tests/Makefile])
+ AC_CONFIG_FILES([lang/Makefile lang/cl/Makefile lang/cl/gpg-error.asd])
+ AC_CONFIG_FILES([src/versioninfo.rc])
+ AC_CONFIG_FILES([src/gpg-error-config], [chmod +x src/gpg-error-config])
++AC_CONFIG_FILES([src/libgpg-error.pc])
+ 
+ AC_OUTPUT
+ 
+diff --git a/src/Makefile.am b/src/Makefile.am
+index a84e3f0..928bc41 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -38,6 +38,9 @@ bin_SCRIPTS = gpg-error-config
+ m4datadir = $(datadir)/aclocal
+ m4data_DATA = gpg-error.m4
+ 
++pkgconfigdir = $(libdir)/pkgconfig
++pkgconfig_DATA = libgpg-error.pc
++
+ EXTRA_DIST = mkstrtable.awk err-sources.h.in err-codes.h.in \
+ 	mkerrnos.awk errnos.in README \
+ 	mkerrcodes.awk mkerrcodes1.awk mkerrcodes2.awk mkerrcodes.c \
+diff --git a/src/libgpg-error.pc.in b/src/libgpg-error.pc.in
+new file mode 100644
+index 0000000..02af9e8
+--- /dev/null
++++ b/src/libgpg-error.pc.in
+@@ -0,0 +1,10 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libgpg-error
++Description: Error codes used by GnuPG et al.
++Version: @VERSION@
++Libs: @GPG_ERROR_CONFIG_LIBS@
++Cflags: @GPG_ERROR_CONFIG_CFLAGS@
+-- 
+1.7.12
+

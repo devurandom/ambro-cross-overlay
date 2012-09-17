@@ -19,9 +19,10 @@ RDEPEND="nls? ( virtual/libintl )"
 DEPEND="nls? ( sys-devel/gettext )"
 
 src_prepare() {
+	epatch "${FILESDIR}"/${P}-0001-Generate-and-install-a-pkg-config-file.patch
 	epatch "${FILESDIR}"/${PN}-multilib-syspaths.patch
 	epunt_cxx
-	elibtoolize
+	eautoreconf
 }
 
 DOCS=( AUTHORS ChangeLog NEWS README )

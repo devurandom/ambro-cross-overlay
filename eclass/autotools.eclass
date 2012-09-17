@@ -97,7 +97,11 @@ RDEPEND=""
 # their own DEPEND string.
 : ${AUTOTOOLS_AUTO_DEPEND:=yes}
 if [[ ${AUTOTOOLS_AUTO_DEPEND} != "no" ]] ; then
-	DEPEND=${AUTOTOOLS_DEPEND}
+	if [[ ${EAPI} = 4-hdepend ]]; then
+		HDEPEND=${AUTOTOOLS_DEPEND}
+	else
+		DEPEND=${AUTOTOOLS_DEPEND}
+	fi
 fi
 
 unset _automake_atom _autoconf_atom

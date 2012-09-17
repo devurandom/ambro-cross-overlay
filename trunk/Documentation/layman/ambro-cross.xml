@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<layman>
+	<overlay
+		type	= "svn"
+		src	= "http://ambro-cross-overlay.googlecode.com/svn/trunk"
+		contact	= "ambrop7@gmail.com"
+		name	= "ambro-cross">
+			<link>http://code.google.com/p/ambro-cross-overlay</link>
+			<description>Cross compile improvements for Gentoo</description>
+	</overlay>
+</layman>

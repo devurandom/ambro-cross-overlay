@@ -33,7 +33,7 @@ src_prepare() {
 	cp "${FILESDIR}"/cross-emerge-ng "${S}"/wrappers || die
 	cp "${FILESDIR}"/toolchain-wrapper "${S}"/wrappers || die
 	epatch "${FILESDIR}"/crossdev-20120721-cross-emerge-ng.patch
-	epatch "${FILESDIR}"/crossdev-20120721-python.patch
+	epatch "${FILESDIR}"/crossdev-20120721-site-vars.patch
 }
 
 src_install() {

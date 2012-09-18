@@ -1,7 +1,7 @@
-diff -urN crossdev-20120721.old/wrappers/site/linux crossdev-20120721/wrappers/site/linux
---- crossdev-20120721.old/wrappers/site/linux	2012-09-17 00:01:41.391848698 +0200
-+++ crossdev-20120721/wrappers/site/linux	2012-09-17 00:09:45.970436124 +0200
-@@ -49,3 +49,8 @@
+diff -urN crossdev-20120721/wrappers/site/linux crossdev-20120721.new/wrappers/site/linux
+--- crossdev-20120721/wrappers/site/linux	2012-07-21 16:45:02.000000000 +0000
++++ crossdev-20120721.new/wrappers/site/linux	2012-09-18 01:30:22.207455099 +0000
+@@ -49,3 +49,11 @@
  screen_cv_sys_sockets_nofs=${screen_cv_sys_sockets_nofs=no}
  screen_cv_sys_sockets_usable=${screen_cv_sys_sockets_usable=yes}
  screen_cv_sys_terminfo_used=${screen_cv_sys_terminfo_used=yes}
@@ -10,3 +10,6 @@ diff -urN crossdev-20120721.old/wrappers/site/linux crossdev-20120721/wrappers/s
 +ac_cv_have_long_long_format=${ac_cv_have_long_long_format=yes}
 +ac_cv_buggy_getaddrinfo=${ac_cv_buggy_getaddrinfo=no}
 +ac_cv_computed_gotos=${ac_cv_computed_gotos=yes}
++
++# glib
++glib_cv_have_qsort_r=${glib_cv_have_qsort_r=yes}

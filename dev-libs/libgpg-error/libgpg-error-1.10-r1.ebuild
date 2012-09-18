@@ -4,7 +4,7 @@
 
 EAPI="4"
 
-inherit eutils libtool
+inherit autotools eutils libtool
 
 DESCRIPTION="Contains error handling functions used by GnuPG software"
 HOMEPAGE="http://www.gnupg.org/related_software/libgpg-error"

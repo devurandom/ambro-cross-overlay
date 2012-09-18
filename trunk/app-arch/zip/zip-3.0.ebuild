@@ -32,7 +32,7 @@ src_unpack() {
 }
 
 src_compile() {
-	local make_args="NO_WCHAR_TEST=1"
+	local make_args=""
 	use bzip2 || make_args="${make_args} IZ_BZIP2=1"
 	use crypt || append-cppflags -DNO_CRYPT
 	use unicode || make_args="${make_args} DISABLE_UNICODE=1"

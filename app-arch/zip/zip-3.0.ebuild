@@ -12,7 +12,7 @@ SRC_URI="mirror://sourceforge/infozip/${MY_P}.zip"
 LICENSE="Info-ZIP"
 SLOT="0"
 KEYWORDS="alpha amd64 arm hppa ia64 ~m68k ~mips ppc ppc64 s390 sh sparc x86 ~x86-fbsd ~x86-interix ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos ~m68k-mint ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
-IUSE="bzip2 crypt unicode"
+IUSE="bzip2 crypt"
 
 RDEPEND="bzip2? ( app-arch/bzip2 )"
 DEPEND="${RDEPEND}
@@ -27,16 +27,18 @@ src_unpack() {
 	epatch "${FILESDIR}"/${PN}-3.0-pic.patch
 	epatch "${FILESDIR}"/${PN}-3.0-exec-stack.patch
 	epatch "${FILESDIR}"/${PN}-3.0-build.patch
+	epatch "${FILESDIR}"/${PN}-3.0-force-largefile.patch
 }
 
 src_compile() {
-	use bzip2 || append-flags -DNO_BZIP2_SUPPORT
+	local make_args
+	use bzip2 || make_args="${make_args} IZ_BZIP2=1"
 	use crypt || append-flags -DNO_CRYPT
-	use unicode || append-flags -DNO_UNICODE_SUPPORT
+	tc-is-cross-compiler && make_args="${make_args} LARGEFILE_SUPPORTED=1"
 	emake \
 		CC="$(tc-getCC)" \
 		LOCAL_ZIP="${CFLAGS} ${CPPFLAGS}" \
-		-f unix/Makefile generic \
+		-f unix/Makefile generic ${make_args} \
 		|| die
 }
 

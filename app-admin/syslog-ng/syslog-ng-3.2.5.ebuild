@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-admin/syslog-ng/syslog-ng-3.2.5.ebuild,v 1.8 2012/05/03 18:02:22 jdhore Exp $
 
-EAPI=2
+EAPI=4-hdepend
 inherit autotools fixheadtails eutils multilib
 
 MY_PV=${PV/_/}
@@ -25,8 +25,8 @@ RDEPEND="
 		>=dev-libs/glib-2.10.1:2
 		caps? ( sys-libs/libcap )
 		sql? ( >=dev-db/libdbi-0.8.3 )"
-DEPEND="${RDEPEND}
-	virtual/pkgconfig
+DEPEND="${RDEPEND}"
+HDEPEND="virtual/pkgconfig
 	sys-devel/flex"
 
 src_prepare() {

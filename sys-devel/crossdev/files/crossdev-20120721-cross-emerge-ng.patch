@@ -19,7 +19,7 @@ diff -urN crossdev-20120721.old/wrappers/Makefile crossdev-20120721/wrappers/Mak
  	mv $(DESTDIR)/$(SITE)/config.site $(DESTDIR)/$(PREFIX)/share/
  	ln -sf $(PORTDIR)/profiles/embedded $(DESTDIR)/$(PREFIX)/share/crossdev/etc/make.profile
 +	
-+	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/cbuild-gcc
-+	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/cbuild-g++
++	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/chost-gcc
++	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/chost-g++
  
  .PHONY: all install

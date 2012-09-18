@@ -1,0 +1,24 @@
+diff -urN zip30/unix/configure zip30.new/unix/configure
+--- zip30/unix/configure	2008-06-19 23:32:20.000000000 +0000
++++ zip30.new/unix/configure	2012-09-18 12:41:09.246877004 +0000
+@@ -453,6 +453,11 @@
+ # Check for wide char for Unicode support
+ # Added 11/24/2005 EG
+ 
++if test -n "${DISABLE_UNICODE}"; then
++  echo -- no Unicode support, disabled
++  OCRCU8=""
++  OCRCTB="crc32_.o"
++else
+ echo Check for wide char support
+ cat > conftest.c << _EOF_
+ #include <stdlib.h>
+@@ -486,7 +491,7 @@
+   OCRCU8="crc32_.o ${OCRCU8}"
+   OCRCTB=""
+ fi
+-
++fi
+ 
+ # from configure 2.4i (Onno) 12/5/04
+ 

@@ -1,0 +1,22 @@
+diff -urN zip30/unix/configure zip30.new/unix/configure
+--- zip30/unix/configure	2008-06-19 23:32:20.000000000 +0000
++++ zip30.new/unix/configure	2012-09-18 02:05:09.176402799 +0000
+@@ -403,6 +403,10 @@
+ # Added 11/4/2003 EG
+ # Revised 8/12/2004 EG
+ 
++if test -n "${LARGEFILE_SUPPORTED}"; then
++   echo -- Assuming large files are supported
++   CFLAGS="${CFLAGS} -DLARGE_FILE_SUPPORT"
++else
+ echo Check for Large File Support
+ cat > conftest.c << _EOF_
+ # define _LARGEFILE_SOURCE       /* some OSes need this for fseeko */
+@@ -448,6 +452,7 @@
+     echo -- no Large File Support - conftest returned $r
+   fi
+ fi
++fi
+ 
+ 
+ # Check for wide char for Unicode support

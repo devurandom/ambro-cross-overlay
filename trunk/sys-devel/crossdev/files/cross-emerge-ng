@@ -5,14 +5,14 @@ if [[ -z $SYSROOT ]]; then
 	exit 1
 fi
 
-# Get triplet from build machine in /
+# Get host triplet from build platform in /
 export CBUILD=$(portageq envvar CHOST)
 
-# Switch to host machine in SYSROOT
+# Switch to host platform in SYSROOT
 export ROOT="${SYSROOT}"
 export PORTAGE_CONFIGROOT="${SYSROOT}"
 
-# Get triplet from host machine in SYSROOT
+# Get host triplet from host platform in SYSROOT
 export CROSS_CHOST=$(portageq envvar CHOST)
 
 if [[ -z $DONT_WRAP_COMPILERS ]]; then

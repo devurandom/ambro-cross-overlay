@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-wireless/wpa_supplicant/wpa_supplicant-1.0.ebuild,v 1.3 2012/06/03 08:03:26 gurligebis Exp $
 
-EAPI=4
+EAPI=4-hdepend
 
 inherit eutils toolchain-funcs qt4-r2 systemd multilib
 
@@ -35,8 +35,8 @@ RDEPEND="dbus? ( sys-apps/dbus )
 	!ssl? ( gnutls? ( net-libs/gnutls ) )
 	!ssl? ( !gnutls? ( dev-libs/libtommath ) )
 	selinux? ( sec-policy/selinux-networkmanager )"
-DEPEND="${RDEPEND}
-	virtual/pkgconfig"
+DEPEND="${RDEPEND}"
+HDEPEND="virtual/pkgconfig"
 
 S="${WORKDIR}/${P}/${PN}"
 

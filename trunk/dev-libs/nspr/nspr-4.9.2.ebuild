@@ -65,13 +65,16 @@ src_configure() {
 
 src_compile() {
 	cd "${S}"/build
-	if tc-is-cross-compiler; then
-		emake CC="$(tc-getBUILD_CC)" CXX="$(tc-getBUILD_CXX)" \
-			-C config nsinstall || die "failed to build"
-		mv config/{,native-}nsinstall
-		sed -s 's#/nsinstall$#/native-nsinstall#' -i config/autoconf.mk
-		rm config/nsinstall.o
-	fi
+        if tc-is-cross-compiler; then
+                $(tc-getBUILD_CC) $BUILD_CFLAGS -DXP_UNIX ../mozilla/nsprpub/config/nsinstall.c \
+                        -o config/native-nsinstall || die "failed to build nsinstall"
+                $(tc-getBUILD_CC) $BUILD_CFLAGS -DXP_UNIX ../mozilla/nsprpub/config/now.c \
+                        -o config/native-now || die "failed to build now"
+                sed -s 's#/nsinstall$#/native-nsinstall#' -i config/autoconf.mk
+                for d in pr/src lib/libc/src lib/ds; do
+                        sed -s 's#/now$#/native-now#' -i ${d}/Makefile
+                done
+        fi
 	emake CC="$(tc-getCC)" CXX="$(tc-getCXX)" || die "failed to build"
 }
 

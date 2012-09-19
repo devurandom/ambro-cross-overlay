@@ -4,7 +4,7 @@
 
 EAPI="4"
 
-inherit autotools eutils libtool multilib
+inherit autotools eutils toolchain-funcs libtool multilib
 
 DESCRIPTION="Apache Portable Runtime Library"
 HOMEPAGE="http://apr.apache.org/"
@@ -23,12 +23,11 @@ DEPEND="${RDEPEND}
 DOCS=(CHANGES NOTICE README)
 
 src_prepare() {
-	# Ensure that system libtool is used.
-	sed -e 's:${installbuilddir}/libtool:/usr/bin/libtool:' -i apr-config.in || die "sed failed"
-	sed -e 's:@LIBTOOL@:$(SHELL) /usr/bin/libtool:' -i build/apr_rules.mk.in || die "sed failed"
+	# Fix cross compile. Adds --tag=CC to libtool and fixes a size check function.
+	epatch "${FILESDIR}/apr-1.4.5-cross-compile.patch"
 
-	AT_M4DIR="build" eautoreconf
-	elibtoolize
+	# Use shipped script to regenerate build system, nothing else seems to work.
+	./buildconf || die "buildconf failed"
 
 	epatch "${FILESDIR}/config.layout.patch"
 }
@@ -55,13 +54,15 @@ src_configure() {
 		export apr_cv_osuuid="no"
 	fi
 
+	#if tc-is-cross-compiler; then
+	#	myconf+=" --without-libtool"
+	#fi
+
 	CONFIG_SHELL="/bin/bash" econf \
 		--enable-layout=gentoo \
 		--enable-nonportable-atomics \
 		--enable-threads \
 		${myconf}
-
-	rm -f libtool
 }
 
 src_compile() {

@@ -1,0 +1,50 @@
+diff -urN apr-1.4.5/build/apr_common.m4 apr-1.4.5-new2/build/apr_common.m4
+--- apr-1.4.5/build/apr_common.m4	2008-06-20 15:43:23.000000000 +0000
++++ apr-1.4.5-new2/build/apr_common.m4	2012-09-19 21:36:39.076311470 +0000
+@@ -453,30 +453,7 @@
+ dnl A variant of AC_CHECK_SIZEOF which allows the checking of
+ dnl sizes of non-builtin types
+ dnl
+-AC_DEFUN([APR_CHECK_SIZEOF_EXTENDED],
+-[changequote(<<, >>)dnl
+-dnl The name to #define.
+-define(<<AC_TYPE_NAME>>, translit(sizeof_$2, [a-z *], [A-Z_P]))dnl
+-dnl The cache variable name.
+-define(<<AC_CV_NAME>>, translit(ac_cv_sizeof_$2, [ *], [_p]))dnl
+-changequote([, ])dnl
+-AC_MSG_CHECKING(size of $2)
+-AC_CACHE_VAL(AC_CV_NAME,
+-[AC_TRY_RUN([#include <stdio.h>
+-$1
+-main()
+-{
+-  FILE *f=fopen("conftestval", "w");
+-  if (!f) exit(1);
+-  fprintf(f, "%d\n", sizeof($2));
+-  exit(0);
+-}], AC_CV_NAME=`cat conftestval`, AC_CV_NAME=0, ifelse([$3],,,
+-AC_CV_NAME=$3))])dnl
+-AC_MSG_RESULT($AC_CV_NAME)
+-AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME, [The size of ]$2)
+-undefine([AC_TYPE_NAME])dnl
+-undefine([AC_CV_NAME])dnl
+-])
++AC_DEFUN([APR_CHECK_SIZEOF_EXTENDED], [AC_CHECK_SIZEOF([$2], 0, [$1])])
+ 
+ 
+ dnl
+diff -urN apr-1.4.5/configure.in apr-1.4.5-new2/configure.in
+--- apr-1.4.5/configure.in	2011-04-11 19:58:38.000000000 +0000
++++ apr-1.4.5-new2/configure.in	2012-09-19 21:38:13.158309113 +0000
+@@ -281,9 +281,9 @@
+   [ use_libtool=$withval ], [ use_libtool="yes" ] )
+ 
+ if test "x$use_libtool" = "xyes"; then
+-      lt_compile='$(LIBTOOL) $(LTFLAGS) --mode=compile $(COMPILE) -o $@ -c $< && touch $@'
++      lt_compile='$(LIBTOOL) $(LTFLAGS) --mode=compile --tag=CC $(COMPILE) -o $@ -c $< && touch $@'
+       LT_VERSION="-version-info `$get_version libtool $version_hdr APR`"
+-      link="\$(LIBTOOL) \$(LTFLAGS) --mode=link \$(LT_LDFLAGS) \$(COMPILE) \$(LT_VERSION) \$(ALL_LDFLAGS) -o \$@"
++      link="\$(LIBTOOL) \$(LTFLAGS) --mode=link --tag=CC \$(LT_LDFLAGS) \$(COMPILE) \$(LT_VERSION) \$(ALL_LDFLAGS) -o \$@"
+       so_ext='lo'
+       lib_target='-rpath $(libdir) $(OBJECTS)'
+       export_lib_target='-rpath \$(libdir) \$(OBJECTS)'

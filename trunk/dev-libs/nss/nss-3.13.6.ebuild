@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-libs/nss/nss-3.13.6.ebuild,v 1.4 2012/09/15 12:12:45 nativemad Exp $
 
-EAPI=3
+EAPI=4-hdepend
 inherit eutils flag-o-matic multilib toolchain-funcs
 
 NSPR_VER="4.9.2"
@@ -19,12 +19,15 @@ SLOT="0"
 KEYWORDS="~alpha amd64 ~arm hppa ~ia64 ~mips ~ppc ~ppc64 ~sparc x86 ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux ~x86-macos ~sparc-solaris ~x64-solaris ~x86-solaris"
 IUSE="utils"
 
-DEPEND="virtual/pkgconfig
-	>=dev-libs/nspr-${NSPR_VER}"
-
 RDEPEND=">=dev-libs/nspr-${NSPR_VER}
 	>=dev-db/sqlite-3.5
 	sys-libs/zlib"
+
+DEPEND="${RDEPEND}"
+
+HDEPEND="virtual/pkgconfig"
+
+CROSS_HDEPEND="~${CATEGORY}/${P}[utils]"
 
 src_setup() {
 	export LC_ALL="C"
@@ -59,6 +62,11 @@ src_prepare() {
 
 	epatch "${FILESDIR}/nss-3.13.1-solaris-gcc.patch"
 
+	if tc-is-cross-compiler; then
+		# use the nsinstall binary we build later
+		epatch "${FILESDIR}/${PN}-3.13.6-nsinstall-path.patch"
+	fi
+
 	# dirty hack
 	cd "${S}"/mozilla/security/nss || die
 	sed -i -e "/CRYPTOLIB/s:\$(SOFTOKEN_LIB_DIR):../freebl/\$(OBJDIR):" \
@@ -79,8 +87,8 @@ src_compile() {
 	*) die "Failed to detect whether your arch is 64bits or 32bits, disable distcc if you're using it, please";;
 	esac
 
-	export NSPR_INCLUDE_DIR=`nspr-config --includedir`
-	export NSPR_LIB_DIR=`nspr-config --libdir`
+	export NSPR_INCLUDE_DIR=${ROOT}/$( $(tc-getPKG_CONFIG) --variable includedir nspr )
+	export NSPR_LIB_DIR=${ROOT}/$( $(tc-getPKG_CONFIG) --variable libdir nspr )
 	export BUILD_OPT=1
 	export NSS_USE_SYSTEM_SQLITE=1
 	export NSDISTMODE=copy
@@ -89,12 +97,33 @@ src_compile() {
 	export FREEBL_NO_DEPEND=1
 	export ASFLAGS=""
 
-	cd "${S}"/mozilla/security/coreconf || die
-	emake -j1 CC="$(tc-getCC)" || die "coreconf make failed"
+	local make_args
+
+	if tc-is-cross-compiler; then
+		# NSS can't figure out anything when cross compiling
+		make_args="OS_TARGET=Linux OS_RELEASE=2.6 OS_TEST=$(tc-arch)"
+
+		# build a host version of nsinstall
+		$(tc-getBUILD_CC) $BUILD_CFLAGS $BUILD_LDFLAGS \
+			"${S}"/mozilla/security/coreconf/nsinstall/{nsinstall,pathsub}.c \
+			-o "${S}"/mozilla/security/build-nsinstall \
+			|| die "failed to compile build-nsinstall"
+
+		# replace sign.sh with one that calls host's shlibsign
+		cp "${FILESDIR}/sign-cross.sh" "${S}"/mozilla/security/nss/cmd/shlibsign/sign.sh \
+			|| die "failed to copy sign-cross.sh"
+
+		# tell sign.sh what to call
+		export HOST_SHLIBSIGN=/usr/bin/shlibsign
+	else
+		cd "${S}"/mozilla/security/coreconf || die
+		emake -j1 CC="$(tc-getCC)" || die "coreconf make failed"
+	fi
+
 	cd "${S}"/mozilla/security/dbm || die
-	emake -j1 CC="$(tc-getCC)" || die "dbm make failed"
+	emake -j1 CC="$(tc-getCC)" ${make_args} || die "dbm make failed"
 	cd "${S}"/mozilla/security/nss || die
-	emake -j1 CC="$(tc-getCC)" || die "nss make failed"
+	emake -j1 CC="$(tc-getCC)" ${make_args} || die "nss make failed"
 }
 
 # Altering these 3 libraries breaks the CHK verification.
@@ -204,7 +233,13 @@ src_install () {
 
 pkg_postinst() {
 	# We must re-sign the libraries AFTER they are stripped.
-	generate_chk "${EROOT}"/usr/bin/shlibsign "${EROOT}"/usr/$(get_libdir)
+	local prog
+	if [ "${ROOT}" != "/" ]; then
+		prog="/usr/bin/shlibsign"
+	else
+		prog="${EROOT}"/usr/bin/shlibsign
+	fi
+	generate_chk "${prog}" "${EROOT}"/usr/$(get_libdir)
 }
 
 pkg_postrm() {

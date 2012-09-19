@@ -204,7 +204,8 @@ src_configure() {
 		$(use_with winbind) \
 		--with-shared-modules=${SHAREDMODS} \
 		--without-included-popt \
-		--without-included-iniparser
+		--without-included-iniparser \
+		--with-libiconv="${ROOT}/usr"
 }
 
 src_compile() {

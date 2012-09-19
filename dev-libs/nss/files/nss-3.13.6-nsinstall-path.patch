@@ -1,0 +1,25 @@
+commit fa3a8571b2c391bfabd7396bb114043589a6cdd8
+Author: root <root@zlatko.(none)>
+Date:   Wed Sep 19 15:22:24 2012 +0000
+
+    This modifies a makefile to use build-nsinstall.
+
+diff --git a/mozilla/security/coreconf/UNIX.mk b/mozilla/security/coreconf/UNIX.mk
+index 5853170..4d06d41 100644
+--- a/mozilla/security/coreconf/UNIX.mk
++++ b/mozilla/security/coreconf/UNIX.mk
+@@ -51,13 +51,7 @@ else
+ 	DEFINES    += -DDEBUG -UNDEBUG -DDEBUG_$(USERNAME)
+ endif
+ 
+-ifdef BUILD_TREE
+-NSINSTALL_DIR  = $(BUILD_TREE)/nss
+-NSINSTALL      = $(BUILD_TREE)/nss/nsinstall
+-else
+-NSINSTALL_DIR  = $(CORE_DEPTH)/coreconf/nsinstall
+-NSINSTALL      = $(NSINSTALL_DIR)/$(OBJDIR_NAME)/nsinstall
+-endif
++NSINSTALL = $(CORE_DEPTH)/build-nsinstall
+ 
+ MKDEPEND_DIR    = $(CORE_DEPTH)/coreconf/mkdepend
+ MKDEPEND        = $(MKDEPEND_DIR)/$(OBJDIR_NAME)/mkdepend

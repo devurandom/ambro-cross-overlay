@@ -49,7 +49,7 @@ PORTDIR_OVERLAY="
 "
 }}}
 
-Now build the cross-compilation toolchain using crossdev:
+Now build a cross-compilation toolchain using crossdev. With the architecture choices used here, the result will be able to run on the [http://www.raspberrypi.org/ Raspberry Pi].
 
 {{{
 crossdev --ov-output /usr/local/portage-crossdev --stable armv6j-hardfloat-linux-gnueabi
@@ -58,8 +58,6 @@ crossdev --ov-output /usr/local/portage-crossdev --stable armv6j-hardfloat-linux
 *--ov-output*: crossdev claims it outputs to the last directory in PORTDIR_OVERLAY, but that is wrong. Hence we specifically instruct it to output into the portage-crossdev directory. 
 
 *--stable*: I have only patched stable versions of various packages to cross-compile. In any case, the stable/unstable choice here has to match with what versions of {linux-headers,gcc,glibc} will be installed into the target system.
-
-Now you can use crossdev to build a toolchain for cross compilation. With the architecture choices used here, the result will be able to run on the [http://www.raspberrypi.org/ Raspberry Pi].
 
 = Set up the cross prefix =
 

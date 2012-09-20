@@ -84,8 +84,14 @@ CFLAGS="-O2 -pipe -march=armv6j -mfpu=vfp -mfloat-abi=hard"
 CXXFLAGS="${CFLAGS}"
 MAKEOPTS="-j5"
 USE="arm symlink"
-FEATURES="buildpkg"
 PORTDIR_OVERLAY="/usr/local/ambro-cross-overlay"
+}}}
+
+If you want to build binary packages for every cross-compile packages, create a directory that will hold them and also add this to make.conf:
+
+{{{
+FEATURES="buildpkg"
+PKGDIR="/usr/local/arm-pkg"
 }}}
 
 Create ${SYSROOT}/etc/portage/package.keywords:

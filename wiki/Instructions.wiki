@@ -84,6 +84,7 @@ CFLAGS="-O2 -pipe -march=armv6j -mfpu=vfp -mfloat-abi=hard"
 CXXFLAGS="${CFLAGS}"
 MAKEOPTS="-j5"
 USE="arm symlink"
+FEATURES="buildpkg"
 PORTDIR_OVERLAY="/usr/local/ambro-cross-overlay"
 }}}
 

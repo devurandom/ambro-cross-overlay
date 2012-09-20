@@ -140,5 +140,5 @@ useradd -g 22 sshd -d /var/empty -s /sbin/nologin
 By default, udevd is not started. To fix it, just add the udev service to the boot runlevel:
 
 {{{
-rc-update add udev default
+rc-update add udev boot
 }}}

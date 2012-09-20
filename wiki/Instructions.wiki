@@ -136,3 +136,9 @@ User and group accounts are not added by ebuilds. This in particular prevents ss
 groupadd -g 22 sshd
 useradd -g 22 sshd -d /var/empty -s /sbin/nologin
 }}}
+
+By default, udevd is not started. To fix it, just add the udev service to the boot runlevel:
+
+{{{
+rc-update add udev default
+}}}

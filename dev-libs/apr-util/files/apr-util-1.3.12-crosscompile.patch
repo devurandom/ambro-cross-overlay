@@ -1,0 +1,68 @@
+diff -urN apr-util-1.3.12/build/apu-conf.m4 apr-util-1.3.12.new/build/apu-conf.m4
+--- apr-util-1.3.12/build/apu-conf.m4	2010-10-01 18:04:03.000000000 +0000
++++ apr-util-1.3.12.new/build/apu-conf.m4	2012-09-20 02:10:53.564899131 +0000
+@@ -24,22 +24,24 @@
+ dnl
+ AC_DEFUN([APU_FIND_APR], [
+ 
+-  dnl use the find_apr.m4 script to locate APR. sets apr_found and apr_config
+-  APR_FIND_APR(,,,[1])
+-  if test "$apr_found" = "no"; then
+-    AC_MSG_ERROR(APR could not be located. Please use the --with-apr option.)
+-  fi
++  PKG_PROG_PKG_CONFIG()
++  PKG_CHECK_MODULES([APR_PC], [apr-1])
+ 
+-  APR_BUILD_DIR="`$apr_config --installbuilddir`"
++  APR_INCLUDES=$APR_PC_CFLAGS
++  APR_LIBS=$APR_PC_LIBS
++  APR_SO_EXT=lo
++  APR_LIB_TARGET="-rpath \$(libdir) \$(OBJECTS)"
++  APR_SYSROOT=$( "$PKG_CONFIG" --cflags-only-I apr-1 | sed 's/ *$//g' | sed 's/^ *//g' )
++  APR_SYSROOT=${APR_SYSROOT#-I}
++  APR_SYSROOT=${APR_SYSROOT%/include/apr-1}
++  APR_BUILD_DIR=${APR_SYSROOT}/share/build-1
++  APR_PREFIX=$( "$PKG_CONFIG" --variable=prefix apr-1 )
++  APR_SYSROOT=${APR_SYSROOT%${APR_PREFIX}}
+ 
+-  dnl make APR_BUILD_DIR an absolute directory (we'll need it in the
+-  dnl sub-projects in some cases)
+-  APR_BUILD_DIR="`cd $APR_BUILD_DIR && pwd`"
+-
+-  APR_INCLUDES="`$apr_config --includes`"
+-  APR_LIBS="`$apr_config --link-libtool --libs`"
+-  APR_SO_EXT="`$apr_config --apr-so-ext`"
+-  APR_LIB_TARGET="`$apr_config --apr-lib-target`"
++  echo "APR_BUILD_DIR ${APR_BUILD_DIR}"
++  echo "APR_PREFIX ${APR_PREFIX}"
++  echo "APR_SYSROOT ${APR_SYSROOT}"
++  echo "APR_LIB_TARGET ${APR_LIB_TARGET}"
+ 
+   AC_SUBST(APR_INCLUDES)
+   AC_SUBST(APR_LIBS)
+diff -urN apr-util-1.3.12/configure.in apr-util-1.3.12.new/configure.in
+--- apr-util-1.3.12/configure.in	2009-11-13 00:27:38.000000000 +0000
++++ apr-util-1.3.12.new/configure.in	2012-09-20 01:27:36.075964225 +0000
+@@ -106,11 +106,7 @@
+ dnl use the same compiler as APR; we need the same compiler options
+ dnl and feature test macros as well
+ dnl
+-APR_SETIFNULL(CC, `$apr_config --cc`)
+-APR_SETIFNULL(CPP, `$apr_config --cpp`)
+-APR_ADDTO(CFLAGS, `$apr_config --cflags`)
+-APR_ADDTO(CPPFLAGS, `$apr_config --cppflags`)
+-apr_shlibpath_var=`$apr_config --shlib-path-var`
++apr_shlibpath_var=LD_LIBRARY_PATH
+ AC_SUBST(apr_shlibpath_var)
+ 
+ dnl
+@@ -265,4 +261,9 @@
+     AC_CONFIG_FILES([test/Makefile])
+ fi
+ 
++LT_INIT
++
++sed -i 's#^LIBTOOL=.*$#LIBTOOL='"$abs_builddir"'/libtool#' $abs_builddir/build/rules.mk
++sed -i 's#^apr_builders=\(.*\)$#apr_builders='"${APR_SYSROOT}"'\1#' $abs_builddir/build/rules.mk
++
+ AC_OUTPUT

@@ -37,6 +37,11 @@ DOCS=(CHANGES NOTICE README)
 
 src_prepare() {
 	epatch "${FILESDIR}/${P}-bdb-5.2.patch"
+
+	if tc-is-cross-compiler; then
+		epatch "${FILESDIR}/apr-util-1.3.12-crosscompile.patch"
+	fi
+
 	eautoreconf
 
 	elibtoolize
@@ -50,15 +55,14 @@ src_configure() {
 		db_version="$(db_findver sys-libs/db)" || die "Unable to find Berkeley DB version"
 		db_version="$(db_ver_to_slot "${db_version}")"
 		db_version="${db_version/\./}"
-		myconf+=" --with-dbm=db${db_version} --with-berkeley-db=$(db_includedir 2> /dev/null):/usr/$(get_libdir)"
+		myconf+=" --with-dbm=db${db_version} --with-berkeley-db=$(db_includedir 2> /dev/null):$ROOT/usr/$(get_libdir)"
 	else
 		myconf+=" --without-berkeley-db"
 	fi
 
 	econf \
 		--datadir=/usr/share/apr-util-1 \
-		--with-apr=/usr \
-		--with-expat=/usr \
+		--with-expat="$ROOT/usr" \
 		--without-sqlite2 \
 		$(use_with freetds) \
 		$(use_with gdbm) \

@@ -23,11 +23,20 @@ DEPEND="${RDEPEND}
 DOCS=(CHANGES NOTICE README)
 
 src_prepare() {
-	# Fix cross compile. Adds --tag=CC to libtool and fixes a size check function.
-	epatch "${FILESDIR}/apr-1.4.5-cross-compile.patch"
+        if tc-is-cross-compiler; then
+		# Fix cross compile. Adds --tag=CC to libtool and fixes a size check function.
+		epatch "${FILESDIR}/apr-1.4.5-cross-compile.patch"
 
-	# Use shipped script to regenerate build system, nothing else seems to work.
-	./buildconf || die "buildconf failed"
+		# Use shipped script to regenerate build system, nothing else seems to work.
+		./buildconf || die "buildconf failed"
+	else
+		# Ensure that system libtool is used.
+		sed -e 's:@LIBTOOL@:$(SHELL) /usr/bin/libtool:' -i build/apr_rules.mk.in || die "sed failed"
+		sed -e 's:${installbuilddir}/libtool:/usr/bin/libtool:' -i apr-config.in || die "sed failed"
+
+		AT_M4DIR="build" eautoreconf
+		elibtoolize
+	fi
 
 	epatch "${FILESDIR}/config.layout.patch"
 }
@@ -54,15 +63,15 @@ src_configure() {
 		export apr_cv_osuuid="no"
 	fi
 
-	#if tc-is-cross-compiler; then
-	#	myconf+=" --without-libtool"
-	#fi
-
 	CONFIG_SHELL="/bin/bash" econf \
 		--enable-layout=gentoo \
 		--enable-nonportable-atomics \
 		--enable-threads \
 		${myconf}
+
+	if ! tc-is-cross-compiler; then
+		rm -f libtool
+	fi
 }
 
 src_compile() {
@@ -89,4 +98,10 @@ src_install() {
 	# This file is only used on AIX systems, which Gentoo is not,
 	# and causes collisions between the SLOTs, so remove it.
 	rm -f "${ED}usr/$(get_libdir)/apr.exp"
+
+	if tc-is-cross-compiler; then
+		rm -f "${D}"/usr/share/build-1/libtool
+		sed -e 's:^LIBTOOL=.*$:LIBTOOL=$(SHELL) /usr/bin/libtool:' -i "${D}"/usr/share/build-1/apr_rules.mk || die "sed failed"
+		sed -e 's:^CC=.*$:CC='"${CHOST}"'-gcc:' -i "${D}"/usr/share/build-1/apr_rules.mk || die "sed failed"
+	fi
 }

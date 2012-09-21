@@ -35,6 +35,7 @@ src_prepare() {
 
 src_configure() {
 	tc-export BUILD_CC CC AR RANLIB
+	export BUILD_CFLAGS="${BUILD_CFLAGS}"
 }
 
 src_install() {

@@ -87,7 +87,7 @@ USE="arm symlink"
 PORTDIR_OVERLAY="/usr/local/ambro-cross-overlay"
 }}}
 
-If you want to build binary packages for every cross-compile packages, create a directory that will hold them and also add this to make.conf:
+If you want to build binary packages for cross-compile packages, create a directory that will hold them and also add this to make.conf:
 
 {{{
 FEATURES="buildpkg"

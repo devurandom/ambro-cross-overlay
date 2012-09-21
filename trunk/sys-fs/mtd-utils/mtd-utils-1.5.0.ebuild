@@ -4,7 +4,7 @@
 
 EAPI="3"
 
-inherit eutils vcs-snapshot
+inherit eutils toolchain-funcs vcs-snapshot
 
 if [[ ${PV} == "99999999" ]] ; then
 	EGIT_REPO_URI="git://git.infradead.org/mtd-utils.git"
@@ -46,7 +46,7 @@ makeopts() {
 }
 
 src_compile() {
-	emake $(makeopts) || die
+	emake $(makeopts) CC=$(tc-getCC) || die
 }
 
 src_install() {

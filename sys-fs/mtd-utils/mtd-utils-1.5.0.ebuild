@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-fs/mtd-utils/mtd-utils-1.5.0.ebuild,v 1.5 2012/08/24 13:38:51 xmw Exp $
 
-EAPI="4-hdepend"
+EAPI="3"
 
-inherit eutils toolchain-funcs vcs-snapshot
+inherit eutils vcs-snapshot
 
 if [[ ${PV} == "99999999" ]] ; then
 	EGIT_REPO_URI="git://git.infradead.org/mtd-utils.git"
@@ -46,7 +46,7 @@ makeopts() {
 }
 
 src_compile() {
-	emake $(makeopts) CC=$(tc-getCC) || die
+	emake $(makeopts) || die
 }
 
 src_install() {

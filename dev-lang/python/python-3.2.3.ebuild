@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-lang/python/python-3.2.3.ebuild,v 1.16 2012/08/03 21:22:53 blueness Exp $
 
-EAPI="4-hdepend"
+EAPI="5-hdepend"
 WANT_AUTOMAKE="none"
 WANT_LIBTOOL="none"
 
@@ -20,7 +20,7 @@ LICENSE="PSF-2"
 SLOT="3.2"
 PYTHON_ABI="${SLOT}"
 KEYWORDS="~alpha amd64 arm ~hppa ~ia64 ~m68k ~mips ppc ppc64 ~s390 ~sh ~sparc x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd"
-IUSE="build doc elibc_uclibc examples gdbm ipv6 +ncurses +readline sqlite +ssl +threads tk +wide-unicode wininst +xml"
+IUSE="build doc elibc_uclibc examples gdbm ipv6 +ncurses +readline sqlite +ssl +threads targetroot tk +wide-unicode wininst +xml"
 
 RDEPEND="app-arch/bzip2
 		>=sys-libs/zlib-1.1.3
@@ -45,8 +45,8 @@ HDEPEND="
 		virtual/pkgconfig
 		sys-apps/paxctl
 		>=sys-devel/autoconf-2.65
-		!sys-devel/gcc[libffi]"
-CROSS_HDEPEND="~${CATEGORY}/${P}"
+		!sys-devel/gcc[libffi]
+		targetroot? ( ~${CATEGORY}/${P} )"
 RDEPEND+=" !build? ( app-misc/mime-types )
 	doc? ( dev-python/python-docs:${SLOT} )"
 

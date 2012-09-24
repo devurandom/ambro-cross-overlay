@@ -97,7 +97,7 @@ RDEPEND=""
 # their own DEPEND string.
 : ${AUTOTOOLS_AUTO_DEPEND:=yes}
 if [[ ${AUTOTOOLS_AUTO_DEPEND} != "no" ]] ; then
-	if [[ ${EAPI} = 4-hdepend ]]; then
+	if [[ ${EAPI} = 5-hdepend ]]; then
 		HDEPEND=${AUTOTOOLS_DEPEND}
 	else
 		DEPEND=${AUTOTOOLS_DEPEND}

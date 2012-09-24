@@ -1,0 +1,522 @@
+diff --git a/bin/repoman b/bin/repoman
+index bc2ac9b..b463cbe 100755
+--- a/bin/repoman
++++ b/bin/repoman
+@@ -71,8 +71,6 @@ from portage import cvstree, normalize_path
+ from portage import util
+ from portage.exception import (FileNotFound, MissingParameter,
+ 	ParseError, PermissionDenied)
+-from portage.manifest import _prohibited_filename_chars_re as \
+-	disallowed_filename_chars_re
+ from portage.process import find_binary, spawn
+ from portage.output import bold, create_color_func, \
+ 	green, nocolor, red
+@@ -1431,19 +1429,19 @@ for x in effective_scanlist:
+ 	ebuildlist = [pkg.pf for pkg in ebuildlist]
+ 
+ 	for y in checkdirlist:
+-		m = disallowed_filename_chars_re.search(y.strip(os.sep))
+-		if m is not None:
++		index = repo_config.find_invalid_path_char(y)
++		if index != -1:
+ 			y_relative = os.path.join(checkdir_relative, y)
+ 			if vcs is not None and not vcs_new_changed(y_relative):
+ 				# If the file isn't in the VCS new or changed set, then
+ 				# assume that it's an irrelevant temporary file (Manifest
+ 				# entries are not generated for file names containing
+ 				# prohibited characters). See bug #406877.
+-				m = None
+-		if m is not None:
++				index = -1
++		if index != -1:
+ 			stats["file.name"] += 1
+ 			fails["file.name"].append("%s/%s: char '%s'" % \
+-				(checkdir, y, m.group(0)))
++				(checkdir, y, y[index]))
+ 
+ 		if not (y in ("ChangeLog", "metadata.xml") or y.endswith(".ebuild")):
+ 			continue
+@@ -1609,20 +1607,19 @@ for x in effective_scanlist:
+ 				stats["file.size"] += 1
+ 				fails["file.size"].append("("+ str(mystat.st_size//1024) + " KiB) "+x+"/files/"+y)
+ 
+-			m = disallowed_filename_chars_re.search(
+-				os.path.basename(y.rstrip(os.sep)))
+-			if m is not None:
++			index = repo_config.find_invalid_path_char(y)
++			if index != -1:
+ 				y_relative = os.path.join(checkdir_relative, "files", y)
+ 				if vcs is not None and not vcs_new_changed(y_relative):
+ 					# If the file isn't in the VCS new or changed set, then
+ 					# assume that it's an irrelevant temporary file (Manifest
+ 					# entries are not generated for file names containing
+ 					# prohibited characters). See bug #406877.
+-					m = None
+-			if m is not None:
++					index = -1
++			if index != -1:
+ 				stats["file.name"] += 1
+ 				fails["file.name"].append("%s/files/%s: char '%s'" % \
+-					(checkdir, y, m.group(0)))
++					(checkdir, y, y[index]))
+ 	del mydigests
+ 
+ 	if check_changelog and "ChangeLog" not in checkdirlist:
+diff --git a/doc/package/ebuild/eapi/5-progress.docbook b/doc/package/ebuild/eapi/5-progress.docbook
+index 142ff8e..bb0b328 100644
+--- a/doc/package/ebuild/eapi/5-progress.docbook
++++ b/doc/package/ebuild/eapi/5-progress.docbook
+@@ -26,6 +26,7 @@
+ 					<listitem><para>use_with</para></listitem>
+ 					<listitem><para>useq</para></listitem>
+ 					<listitem><para>usev</para></listitem>
++					<listitem><para>usex</para></listitem>
+ 				</itemizedlist>
+ 			</para>
+ 		</section>
+diff --git a/man/emerge.1 b/man/emerge.1
+index f2fb6cc..da2c631 100644
+--- a/man/emerge.1
++++ b/man/emerge.1
+@@ -428,9 +428,8 @@ required.
+ .TP
+ .BR "\-\-depclean\-lib\-check [ y | n ]"
+ Account for library link-level dependencies during
+-\fB\-\-depclean\fR and \fB\-\-prune\fR actions. This
+-option is enabled by default. In some cases this can
+-be somewhat time\-consuming. This option is ignored
++\fB\-\-depclean\fR and \fB\-\-prune\fR actions.
++This option is enabled by default. This option is ignored
+ when FEATURES="preserve\-libs" is enabled in
+ \fBmake.conf\fR(5), since any libraries that have
+ consumers will simply be preserved.
+diff --git a/pym/_emerge/depgraph.py b/pym/_emerge/depgraph.py
+index ac70d43..9da202c 100644
+--- a/pym/_emerge/depgraph.py
++++ b/pym/_emerge/depgraph.py
+@@ -23,13 +23,14 @@ from portage.dep import Atom, best_match_to_list, extract_affecting_use, \
+ 	check_required_use, human_readable_required_use, match_from_list, \
+ 	_repo_separator
+ from portage.dep._slot_operator import ignore_built_slot_operator_deps
+-from portage.eapi import eapi_has_strong_blocks, eapi_has_required_use
++from portage.eapi import eapi_has_strong_blocks, eapi_has_required_use, \
++	_get_eapi_attrs
+ from portage.exception import (InvalidAtom, InvalidDependString,
+ 	PackageNotFound, PortageException)
+ from portage.output import colorize, create_color_func, \
+ 	darkgreen, green
+ bad = create_color_func("BAD")
+-from portage.package.ebuild.config import _feature_flags
++from portage.package.ebuild.config import _get_feature_flags
+ from portage.package.ebuild.getmaskingstatus import \
+ 	_getmaskingstatus, _MaskReason
+ from portage._sets import SETPREFIX
+@@ -1229,20 +1230,22 @@ class depgraph(object):
+ 			in ("y", "auto"))
+ 		newuse = "--newuse" in self._frozen_config.myopts
+ 		changed_use = "changed-use" == self._frozen_config.myopts.get("--reinstall")
++		feature_flags = _get_feature_flags(
++			_get_eapi_attrs(pkg.metadata["EAPI"]))
+ 
+ 		if newuse or (binpkg_respect_use and not changed_use):
+ 			flags = set(orig_iuse.symmetric_difference(
+ 				cur_iuse).difference(forced_flags))
+ 			flags.update(orig_iuse.intersection(orig_use).symmetric_difference(
+ 				cur_iuse.intersection(cur_use)))
+-			flags.difference_update(_feature_flags)
++			flags.difference_update(feature_flags)
+ 			if flags:
+ 				return flags
+ 
+ 		elif changed_use or binpkg_respect_use:
+ 			flags = set(orig_iuse.intersection(orig_use).symmetric_difference(
+ 				cur_iuse.intersection(cur_use)))
+-			flags.difference_update(_feature_flags)
++			flags.difference_update(feature_flags)
+ 			if flags:
+ 				return flags
+ 		return None
+diff --git a/pym/_emerge/is_valid_package_atom.py b/pym/_emerge/is_valid_package_atom.py
+index 7cb2a5b..a1e4294 100644
+--- a/pym/_emerge/is_valid_package_atom.py
++++ b/pym/_emerge/is_valid_package_atom.py
+@@ -1,11 +1,11 @@
+-# Copyright 1999-2011 Gentoo Foundation
++# Copyright 1999-2012 Gentoo Foundation
+ # Distributed under the terms of the GNU General Public License v2
+ 
+ import re
+ from portage.dep import isvalidatom
+ 
+ def insert_category_into_atom(atom, category):
+-	alphanum = re.search(r'\w', atom)
++	alphanum = re.search(r'\w', atom, re.UNICODE)
+ 	if alphanum:
+ 		ret = atom[:alphanum.start()] + "%s/" % category + \
+ 			atom[alphanum.start():]
+diff --git a/pym/_emerge/resolver/output.py b/pym/_emerge/resolver/output.py
+index 05a3e82..0f2111f 100644
+--- a/pym/_emerge/resolver/output.py
++++ b/pym/_emerge/resolver/output.py
+@@ -251,7 +251,7 @@ class Display(object):
+ 		for key in use_expand:
+ 			if key in self.use_expand_hidden:
+ 				continue
+-			self.verboseadd += _create_use_string(self.conf, key.upper(),
++			self.verboseadd += _create_use_string(pkg, self.conf, key.upper(),
+ 				cur_iuse_map[key], iuse_forced[key],
+ 				cur_use_map[key], old_iuse_map[key],
+ 				old_use_map[key], self.is_new,
+diff --git a/pym/_emerge/resolver/output_helpers.py b/pym/_emerge/resolver/output_helpers.py
+index be4ea4a..23b056c 100644
+--- a/pym/_emerge/resolver/output_helpers.py
++++ b/pym/_emerge/resolver/output_helpers.py
+@@ -14,10 +14,11 @@ import sys
+ from portage import os
+ from portage import _encodings, _unicode_encode
+ from portage._sets.base import InternalPackageSet
++from portage.eapi import _get_eapi_attrs
+ from portage.output import (blue, bold, colorize, create_color_func,
+ 	green, red, teal, turquoise, yellow)
+ bad = create_color_func("BAD")
+-from portage.package.ebuild.config import _feature_flags
++from portage.package.ebuild.config import _get_feature_flags
+ from portage.util import shlex_split, writemsg
+ from portage.util.SlotObject import SlotObject
+ from portage.versions import catpkgsplit
+@@ -247,7 +248,7 @@ def _format_size(mysize):
+ 		mystr=mystr[:mycount]+","+mystr[mycount:]
+ 	return mystr+" kB"
+ 
+-def _create_use_string(conf, name, cur_iuse, iuse_forced, cur_use,
++def _create_use_string(pkg, conf, name, cur_iuse, iuse_forced, cur_use,
+ 	old_iuse, old_use,
+ 	is_new, reinst_flags):
+ 
+@@ -267,6 +268,7 @@ def _create_use_string(conf, name, cur_iuse, iuse_forced, cur_use,
+ 	any_iuse = cur_iuse.union(old_iuse)
+ 	any_iuse = list(any_iuse)
+ 	any_iuse.sort()
++	feature_flags = _get_feature_flags(_get_eapi_attrs(pkg.metadata["EAPI"]))
+ 	for flag in any_iuse:
+ 		flag_str = None
+ 		isEnabled = False
+@@ -300,7 +302,7 @@ def _create_use_string(conf, name, cur_iuse, iuse_forced, cur_use,
+ 			elif flag in old_use:
+ 				flag_str = green("-" + flag) + "*"
+ 		if flag_str:
+-			if flag in _feature_flags:
++			if flag in feature_flags:
+ 				flag_str = "{" + flag_str + "}"
+ 			elif flag in iuse_forced:
+ 				flag_str = "(" + flag_str + ")"
+diff --git a/pym/portage/dbapi/__init__.py b/pym/portage/dbapi/__init__.py
+index ad22f39..fc7c7eb 100644
+--- a/pym/portage/dbapi/__init__.py
++++ b/pym/portage/dbapi/__init__.py
+@@ -21,7 +21,7 @@ from portage.exception import InvalidData
+ from portage.localization import _
+ 
+ class dbapi(object):
+-	_category_re = re.compile(r'^\w[-.+\w]*$')
++	_category_re = re.compile(r'^\w[-.+\w]*$', re.UNICODE)
+ 	_categories = None
+ 	_use_mutable = False
+ 	_known_keys = frozenset(x for x in auxdbkeys
+diff --git a/pym/portage/dep/__init__.py b/pym/portage/dep/__init__.py
+index b4b240d..6e03004 100644
+--- a/pym/portage/dep/__init__.py
++++ b/pym/portage/dep/__init__.py
+@@ -72,7 +72,7 @@ def _get_slot_re(eapi_attrs):
+ 	else:
+ 		slot_re = _slot
+ 
+-	slot_re = re.compile('^' + slot_re + '$', re.VERBOSE)
++	slot_re = re.compile('^' + slot_re + '$', re.VERBOSE | re.UNICODE)
+ 
+ 	_slot_re_cache[cache_key] = slot_re
+ 	return slot_re
+@@ -90,7 +90,7 @@ def _get_slot_dep_re(eapi_attrs):
+ 	else:
+ 		slot_re = _slot
+ 
+-	slot_re = re.compile('^' + slot_re + '$', re.VERBOSE)
++	slot_re = re.compile('^' + slot_re + '$', re.VERBOSE | re.UNICODE)
+ 
+ 	_slot_dep_re_cache[cache_key] = slot_re
+ 	return slot_re
+@@ -123,7 +123,7 @@ def _get_atom_re(eapi_attrs):
+ 		'(?P<star>=' + cpv_re + r'\*)|' +
+ 		'(?P<simple>' + cp_re + '))' + 
+ 		'(' + _slot_separator + _slot_loose + ')?' +
+-		_repo + ')(' + _use + ')?$', re.VERBOSE)
++		_repo + ')(' + _use + ')?$', re.VERBOSE | re.UNICODE)
+ 
+ 	_atom_re_cache[cache_key] = atom_re
+ 	return atom_re
+@@ -145,7 +145,7 @@ def _get_atom_wildcard_re(eapi_attrs):
+ 		_extended_cat + r')/(' + pkg_re + r'))' + \
+ 		'|(?P<star>=((' + _extended_cat + r')/(' + pkg_re + r'))-(?P<version>\*\d+\*)))' + \
+ 		'(:(?P<slot>' + _slot_loose + r'))?(' +
+-		_repo_separator + r'(?P<repo>' + _repo_name + r'))?$')
++		_repo_separator + r'(?P<repo>' + _repo_name + r'))?$', re.UNICODE)
+ 
+ 	_atom_wildcard_re_cache[cache_key] = atom_re
+ 	return atom_re
+@@ -1585,7 +1585,7 @@ def extended_cp_match(extended_cp, other_cp):
+ 	extended_cp_re = _extended_cp_re_cache.get(extended_cp)
+ 	if extended_cp_re is None:
+ 		extended_cp_re = re.compile("^" + re.escape(extended_cp).replace(
+-			r'\*', '[^/]*') + "$")
++			r'\*', '[^/]*') + "$", re.UNICODE)
+ 		_extended_cp_re_cache[extended_cp] = extended_cp_re
+ 	return extended_cp_re.match(other_cp) is not None
+ 
+diff --git a/pym/portage/eapi.py b/pym/portage/eapi.py
+index e02e017..b12d81d 100644
+--- a/pym/portage/eapi.py
++++ b/pym/portage/eapi.py
+@@ -85,7 +85,7 @@ def eapi_allows_directories_on_profile_level_and_repository_level(eapi):
+ 
+ _eapi_attrs = collections.namedtuple('_eapi_attrs',
+ 	'dots_in_PN dots_in_use_flags exports_EBUILD_PHASE_FUNC '
+-	'iuse_defaults iuse_effective '
++	'feature_flag_test iuse_defaults iuse_effective '
+ 	'repo_deps required_use required_use_at_most_one_of slot_operator slot_deps '
+ 	'src_uri_arrows strong_blocks use_deps use_dep_defaults')
+ 
+@@ -111,6 +111,7 @@ def _get_eapi_attrs(eapi):
+ 		dots_in_PN = (eapi is None or eapi_allows_dots_in_PN(eapi)),
+ 		dots_in_use_flags = (eapi is None or eapi_allows_dots_in_use_flags(eapi)),
+ 		exports_EBUILD_PHASE_FUNC = (eapi is None or eapi_exports_EBUILD_PHASE_FUNC(eapi)),
++		feature_flag_test = True,
+ 		iuse_defaults = (eapi is None or eapi_has_iuse_defaults(eapi)),
+ 		iuse_effective = (eapi is not None and eapi_has_iuse_effective(eapi)),
+ 		repo_deps = (eapi is None or eapi_has_repo_deps(eapi)),
+diff --git a/pym/portage/manifest.py b/pym/portage/manifest.py
+index b2f1ff2..b81b580 100644
+--- a/pym/portage/manifest.py
++++ b/pym/portage/manifest.py
+@@ -3,13 +3,14 @@
+ 
+ import errno
+ import io
+-import re
++import sys
+ import warnings
+ 
+ import portage
+ portage.proxy.lazyimport.lazyimport(globals(),
+ 	'portage.checksum:hashfunc_map,perform_multiple_checksums,' + \
+ 		'verify_all,_apply_hash_filter,_filter_unaccelarated_hashes',
++	'portage.repository.config:_find_invalid_path_char',
+ 	'portage.util:write_atomic',
+ )
+ 
+@@ -24,8 +25,10 @@ from portage.const import (MANIFEST1_HASH_FUNCTIONS, MANIFEST2_HASH_DEFAULTS,
+ 	MANIFEST2_HASH_FUNCTIONS, MANIFEST2_IDENTIFIERS, MANIFEST2_REQUIRED_HASH)
+ from portage.localization import _
+ 
+-# Characters prohibited by repoman's file.name check.
+-_prohibited_filename_chars_re = re.compile(r'[^a-zA-Z0-9._\-+:]')
++if sys.hexversion >= 0x3000000:
++	_unicode = str
++else:
++	_unicode = unicode
+ 
+ class FileNotInManifestException(PortageException):
+ 	pass
+@@ -38,14 +41,10 @@ def manifest2AuxfileFilter(filename):
+ 	for x in mysplit:
+ 		if x[:1] == '.':
+ 			return False
+-		if _prohibited_filename_chars_re.search(x) is not None:
+-			return False
+ 	return not filename[:7] == 'digest-'
+ 
+ def manifest2MiscfileFilter(filename):
+ 	filename = filename.strip(os.sep)
+-	if _prohibited_filename_chars_re.search(filename) is not None:
+-		return False
+ 	return not (filename in ["CVS", ".svn", "files", "Manifest"] or filename.endswith(".ebuild"))
+ 
+ def guessManifestFileType(filename):
+@@ -108,11 +107,20 @@ class Manifest2Entry(ManifestEntry):
+ 	def __ne__(self, other):
+ 		return not self.__eq__(other)
+ 
++	if sys.hexversion < 0x3000000:
++
++		__unicode__ = __str__
++
++		def __str__(self):
++			return _unicode_encode(self.__unicode__(),
++				encoding=_encodings['repo.content'], errors='strict')
++
+ class Manifest(object):
+ 	parsers = (parseManifest2,)
+ 	def __init__(self, pkgdir, distdir, fetchlist_dict=None,
+ 		manifest1_compat=DeprecationWarning, from_scratch=False, thin=False,
+-			allow_missing=False, allow_create=True, hashes=None):
++		allow_missing=False, allow_create=True, hashes=None,
++		find_invalid_path_char=None):
+ 		""" Create new Manifest instance for package in pkgdir.
+ 		    Do not parse Manifest file if from_scratch == True (only for internal use)
+ 			The fetchlist_dict parameter is required only for generation of
+@@ -125,6 +133,9 @@ class Manifest(object):
+ 				"portage.manifest.Manifest constructor is deprecated.",
+ 				DeprecationWarning, stacklevel=2)
+ 
++		if find_invalid_path_char is None:
++			find_invalid_path_char = _find_invalid_path_char
++		self._find_invalid_path_char = find_invalid_path_char
+ 		self.pkgdir = _unicode_decode(pkgdir).rstrip(os.sep) + os.sep
+ 		self.fhashdict = {}
+ 		self.hashes = set()
+@@ -289,7 +300,7 @@ class Manifest(object):
+ 					# thin manifests with no DIST entries, myentries is
+ 					# non-empty for all currently known use cases.
+ 					write_atomic(self.getFullname(), "".join("%s\n" %
+-						str(myentry) for myentry in myentries))
++						_unicode(myentry) for myentry in myentries))
+ 				else:
+ 					# With thin manifest, there's no need to have
+ 					# a Manifest file if there are no DIST entries.
+@@ -366,7 +377,8 @@ class Manifest(object):
+ 		self.__init__(self.pkgdir, self.distdir,
+ 			fetchlist_dict=self.fetchlist_dict, from_scratch=True,
+ 			thin=self.thin, allow_missing=self.allow_missing,
+-			allow_create=self.allow_create, hashes=self.hashes)
++			allow_create=self.allow_create, hashes=self.hashes,
++			find_invalid_path_char=self._find_invalid_path_char)
+ 		pn = os.path.basename(self.pkgdir.rstrip(os.path.sep))
+ 		cat = self._pkgdir_category()
+ 
+@@ -461,7 +473,8 @@ class Manifest(object):
+ 			if pf is not None:
+ 				mytype = "EBUILD"
+ 				cpvlist.append(pf)
+-			elif manifest2MiscfileFilter(f):
++			elif self._find_invalid_path_char(f) == -1 and \
++				manifest2MiscfileFilter(f):
+ 				mytype = "MISC"
+ 			else:
+ 				continue
+@@ -480,7 +493,8 @@ class Manifest(object):
+ 				full_path = os.path.join(parentdir, f)
+ 				recursive_files.append(full_path[cut_len:])
+ 		for f in recursive_files:
+-			if not manifest2AuxfileFilter(f):
++			if self._find_invalid_path_char(f) != -1 or \
++				not manifest2AuxfileFilter(f):
+ 				continue
+ 			self.fhashdict["AUX"][f] = perform_multiple_checksums(
+ 				os.path.join(self.pkgdir, "files", f.lstrip(os.sep)), self.hashes)
+diff --git a/pym/portage/package/ebuild/config.py b/pym/portage/package/ebuild/config.py
+index 684de16..894d14c 100644
+--- a/pym/portage/package/ebuild/config.py
++++ b/pym/portage/package/ebuild/config.py
+@@ -60,7 +60,21 @@ from portage.package.ebuild._config.helper import ordered_by_atom_specificity, p
+ if sys.hexversion >= 0x3000000:
+ 	basestring = str
+ 
+-_feature_flags = frozenset(["test"])
++_feature_flags_cache = {}
++
++def _get_feature_flags(eapi_attrs):
++	cache_key = (eapi_attrs.feature_flag_test,)
++	flags = _feature_flags_cache.get(cache_key)
++	if flags is not None:
++		return flags
++
++	flags = []
++	if eapi_attrs.feature_flag_test:
++		flags.append("test")
++
++	flags = frozenset(flags)
++	_feature_flags_cache[cache_key] = flags
++	return flags
+ 
+ def autouse(myvartree, use_cache=1, mysettings=None):
+ 	warnings.warn("portage.autouse() is deprecated",
+diff --git a/pym/portage/repository/config.py b/pym/portage/repository/config.py
+index 77b016d..83018b8 100644
+--- a/pym/portage/repository/config.py
++++ b/pym/portage/repository/config.py
+@@ -28,6 +28,9 @@ from portage import _unicode_encode
+ from portage import _encodings
+ from portage import manifest
+ 
++# Characters prohibited by repoman's file.name check.
++_invalid_path_char_re = re.compile(r'[^a-zA-Z0-9._\-+:/]')
++
+ _valid_profile_formats = frozenset(
+ 	['pms', 'portage-1', 'portage-2'])
+ 
+@@ -49,12 +52,27 @@ def _gen_valid_repo(name):
+ 		name = None
+ 	return name
+ 
++def _find_invalid_path_char(path, pos=0, endpos=None):
++	"""
++	Returns the position of the first invalid character found in basename,
++	or -1 if no invalid characters are found.
++	"""
++	if endpos is None:
++		endpos = len(path)
++
++	m = _invalid_path_char_re.search(path, pos=pos, endpos=endpos)
++	if m is not None:
++		return m.start()
++
++	return -1
++
+ class RepoConfig(object):
+ 	"""Stores config of one repository"""
+ 
+ 	__slots__ = ('aliases', 'allow_missing_manifest', 'allow_provide_virtual',
+ 		'cache_formats', 'create_manifest', 'disable_manifest', 'eapi',
+-		'eclass_db', 'eclass_locations', 'eclass_overrides', 'format', 'location',
++		'eclass_db', 'eclass_locations', 'eclass_overrides',
++		'find_invalid_path_char', 'format', 'location',
+ 		'main_repo', 'manifest_hashes', 'masters', 'missing_repo_name',
+ 		'name', 'portage1_profiles', 'portage1_profiles_compat', 'priority',
+ 		'profile_formats', 'sign_commit', 'sign_manifest', 'sync',
+@@ -138,6 +156,7 @@ class RepoConfig(object):
+ 		self.cache_formats = None
+ 		self.portage1_profiles = True
+ 		self.portage1_profiles_compat = False
++		self.find_invalid_path_char = _find_invalid_path_char
+ 
+ 		# Parse layout.conf.
+ 		if self.location:
+@@ -211,6 +230,7 @@ class RepoConfig(object):
+ 		kwds['hashes'] = self.manifest_hashes
+ 		if self.disable_manifest:
+ 			kwds['from_scratch'] = True
++		kwds['find_invalid_path_char'] = self.find_invalid_path_char
+ 		return manifest.Manifest(*args, **kwds)
+ 
+ 	def update(self, new_repo):
+diff --git a/pym/portage/versions.py b/pym/portage/versions.py
+index 242623f..a9b7e64 100644
+--- a/pym/portage/versions.py
++++ b/pym/portage/versions.py
+@@ -79,7 +79,7 @@ def _get_pv_re(eapi_attrs):
+ 	else:
+ 		pv_re = _pv['dots_disallowed_in_PN']
+ 
+-	pv_re = re.compile('^' + pv_re + '$', re.VERBOSE)
++	pv_re = re.compile(_unicode_decode('^' + pv_re + '$'), re.VERBOSE | re.UNICODE)
+ 
+ 	_pv_re_cache[cache_key] = pv_re
+ 	return pv_re
+@@ -292,7 +292,7 @@ def _pkgsplit(mypkg, eapi=None):
+ 
+ 	return  (m.group('pn'), m.group('ver'), rev) 
+ 
+-_cat_re = re.compile('^%s$' % _cat)
++_cat_re = re.compile('^%s$' % _cat, re.UNICODE)
+ _missing_cat = 'null'
+ 
+ def catpkgsplit(mydata, silent=1, eapi=None):

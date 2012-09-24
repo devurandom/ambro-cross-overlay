@@ -11,7 +11,7 @@
 # dealing with packages using Qt4 libraries. Requires EAPI=2 or later.
 
 case ${EAPI} in
-	2|3|4|4-hdepend)	: ;;
+	2|3|4|5|5-hdepend)	: ;;
 	*)	die "EAPI=${EAPI} is not supported by ${ECLASS} eclass." ;;
 esac
 

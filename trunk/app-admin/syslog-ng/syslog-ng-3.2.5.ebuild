@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-admin/syslog-ng/syslog-ng-3.2.5.ebuild,v 1.8 2012/05/03 18:02:22 jdhore Exp $
 
-EAPI=4-hdepend
+EAPI=5-hdepend
 inherit autotools fixheadtails eutils multilib
 
 MY_PV=${PV/_/}

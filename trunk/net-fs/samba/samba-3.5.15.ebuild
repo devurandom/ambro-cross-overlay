@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-3.5.15.ebuild,v 1.8 2012/05/21 19:04:35 ranger Exp $
 
-EAPI=4-hdepend
+EAPI=5-hdepend
 
 inherit pam versionator multilib eutils
 

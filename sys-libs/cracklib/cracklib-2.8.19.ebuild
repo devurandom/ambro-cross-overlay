@@ -53,8 +53,6 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-2.8.19-portable-dictionary.patch
-
 	elibtoolize #269003
 	do_python
 }

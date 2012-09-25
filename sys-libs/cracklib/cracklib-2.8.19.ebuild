@@ -53,6 +53,8 @@ pkg_setup() {
 }
 
 src_prepare() {
+	epatch "${FILESDIR}"/${PN}-2.8.19-portable-dictionary.patch
+
 	elibtoolize #269003
 	do_python
 }
@@ -87,7 +89,7 @@ src_install() {
 
 	# generate dictionary
 	if [ "${ROOT}" = / ]; then
-		"${S}/util/cracklib-format" "${ED}"/usr/share/dict/* \
+		sh "${S}/util/cracklib-format" "${ED}"/usr/share/dict/* \
 		| library-path-run "${S}/lib/.libs" "${S}/util/cracklib-packer" cracklib_dict || die
 	else
 		create-cracklib-dict -o cracklib_dict "${ED}"/usr/share/dict/* || die

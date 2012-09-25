@@ -148,8 +148,7 @@ src_prepare() {
 		fi
 		epatch "${WORKDIR}/${PN}-${PATCHVER}.patch"
 	fi
-	epatch "${FILESDIR}/portage-2.2.0_alpha131-to-439b2c8e8a09bc048de66d30905dbc086ee6796d.patch"
-	epatch "${FILESDIR}/portage-439b2c8e8a09bc048de66d30905dbc086ee6796d-hdepend.patch"
+	epatch "${FILESDIR}/portage-2.2.0_alpha132-to-9d84d008d1261405d22de537d8672d67791a9271.patch"
 	einfo "Setting portage.VERSION to ${PVR} ..."
 	sed -e "s/^VERSION=.*/VERSION=\"${PVR}\"/" -i pym/portage/__init__.py || \
 		die "Failed to patch portage.VERSION"

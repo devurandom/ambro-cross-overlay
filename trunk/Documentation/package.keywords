@@ -6,6 +6,7 @@ dev-libs/mpc
 sys-apps/util-linux
 sys-apps/groff
 sys-apps/sysvinit # not broken, dependency only
+sys-libs/gdbm
 
 # other stuff in overlay
 dev-libs/libgpg-error

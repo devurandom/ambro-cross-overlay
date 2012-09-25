@@ -27,8 +27,8 @@ Then reinstall the following packages, and make sure you have the following pack
 Note than you first have to install portage, so that the python ebuild which uses HDEPEND will work:
 
 {{{
-emerge -av1 sys-apps/portage::ambro-cross
-emerge -av1 sys-devel/crossdev::ambro-cross dev-lang/python::ambro-cross
+emerge -av sys-apps/portage::ambro-cross
+emerge -av sys-devel/crossdev::ambro-cross dev-lang/python::ambro-cross
 }}}
 
 = Build a cross toolchain =

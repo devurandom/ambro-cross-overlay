@@ -113,7 +113,7 @@ Now we build a libc into the target. This will use the headers and libraries whi
 DONT_WRAP_COMPILERS=1 cross-emerge-ng -av1 sys-kernel/linux-headers sys-libs/glibc
 }}}
 
-The DONT_WRAP_COMPILERS variable tells cross-emerge-ng not to set CC and CXX to /usr/bin/cross-g{cc,++}. However, from this point on, we will use those wrappers. The only thing they do is prepend "--sysroot ${SYSROOT}" to compiler arguments to make sure they're looking for headers and libraries within SYSROOT, and nowhere else.
+The DONT_WRAP_COMPILERS variable tells cross-emerge-ng not to set CC and CXX to /usr/bin/chost-g{cc,++}. However, from this point on, we will use those wrappers. The only thing they do is prepend "--sysroot ${SYSROOT}" to compiler arguments to make sure they're looking for headers and libraries within SYSROOT, and nowhere else.
 
 Now we install the rest of the system.
 

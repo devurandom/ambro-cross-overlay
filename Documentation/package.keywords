@@ -1,0 +1,18 @@
+# use new versions which do not install .la files
+dev-libs/mpfr
+dev-libs/mpc
+
+# use new versions to fix cross compile
+sys-apps/util-linux
+sys-apps/groff
+sys-apps/sysvinit # not broken, dependency only
+
+# other stuff in overlay
+dev-libs/libgpg-error
+dev-libs/libgcrypt
+dev-libs/nss
+dev-libs/nspr
+app-admin/syslog-ng
+
+# other stuff in portage
+~app-misc/tmux-1.6 **

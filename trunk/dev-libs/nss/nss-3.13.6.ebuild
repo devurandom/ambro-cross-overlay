@@ -28,9 +28,6 @@ DEPEND="${RDEPEND}"
 HDEPEND="virtual/pkgconfig
 	 targetroot? ( ~${CATEGORY}/${P}[utils] )"
 
-#CROSS_HDEPEND="~${CATEGORY}/${P}[utils]"
-
-
 src_setup() {
 	export LC_ALL="C"
 }
@@ -42,6 +39,7 @@ src_prepare() {
 	epatch "${DISTDIR}/${PN}-3.13.6-add_spi+cacerts_ca_certs.patch"
 	epatch "${DISTDIR}/${PN}-3.13.3_pem.support"
 	epatch "${FILESDIR}/${PN}-3.13.5-x32.patch"
+	epatch "${FILESDIR}/${PN}-3.13.6-no-sign.patch"
 
 	cd "${S}"/mozilla/security/coreconf || die
 	# hack nspr paths
@@ -110,13 +108,6 @@ src_compile() {
 			"${S}"/mozilla/security/coreconf/nsinstall/{nsinstall,pathsub}.c \
 			-o "${S}"/mozilla/security/build-nsinstall \
 			|| die "failed to compile build-nsinstall"
-
-		# replace sign.sh with one that calls host's shlibsign
-		cp "${FILESDIR}/sign-cross.sh" "${S}"/mozilla/security/nss/cmd/shlibsign/sign.sh \
-			|| die "failed to copy sign-cross.sh"
-
-		# tell sign.sh what to call
-		export HOST_SHLIBSIGN=/usr/bin/shlibsign
 	else
 		cd "${S}"/mozilla/security/coreconf || die
 		emake -j1 CC="$(tc-getCC)" || die "coreconf make failed"
@@ -235,13 +226,20 @@ src_install () {
 
 pkg_postinst() {
 	# We must re-sign the libraries AFTER they are stripped.
-	local prog
-	if [ "${ROOT}" != "/" ]; then
-		prog="/usr/bin/shlibsign"
+	local shlibsign
+	if [ "${ROOT}" == "/" ]; then
+		shlibsign="${EROOT}"/usr/bin/shlibsign
 	else
-		prog="${EROOT}"/usr/bin/shlibsign
+		shlibsign=$(which shlibsign)
+		if [ -z "${shlibsign}" ]; then
+			eerror "Could not sign libraries because shlibsign is not available."
+			eerror "Please install NSS with USE=utils on host and reinstall this"
+			eerror "to get libraries properly signed."
+			return
+		fi
 	fi
-	generate_chk "${prog}" "${EROOT}"/usr/$(get_libdir)
+
+	generate_chk "${shlibsign}" "${EROOT}"/usr/$(get_libdir)
 }
 
 pkg_postrm() {

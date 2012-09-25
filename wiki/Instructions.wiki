@@ -18,17 +18,17 @@ PORTDIR_OVERLAY="
 "
 }}}
 
-Then reinstall the following packages, and make sure you have the right version and they come *from this overlay*:
+Then reinstall the following packages, and make sure you have the following packages installed *from this overlay*:
 
-  * portage (whichever version is in the overlay)
-  * crossdev-20120721
-  * python-3.2.3
+  * portage
+  * crossdev
+  * python
 
 Note than you first have to install portage, so that the python ebuild which uses HDEPEND will work:
 
 {{{
 emerge -av1 sys-apps/portage::ambro-cross
-emerge -av1 =sys-devel/crossdev-20120721::ambro-cross =dev-lang/python-3.2.3::ambro-cross
+emerge -av1 sys-devel/crossdev::ambro-cross dev-lang/python::ambro-cross
 }}}
 
 = Build a cross toolchain =

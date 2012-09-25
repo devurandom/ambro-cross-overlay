@@ -96,14 +96,7 @@ PKGDIR="/usr/local/arm-pkg"
 
 Create ${SYSROOT}/etc/portage/package.keywords:
 {{{
-# use new versions which do not install .la files
-dev-libs/mpfr
-dev-libs/mpc
-# use new versions to fix cross compile
-sys-apps/util-linux
-sys-apps/groff
-sys-apps/sysvinit # not broken, dependency only
-sys-apps/portage # for HDEPEND
+cp /usr/local/ambro-cross-overlay/Documentation/package.keywords ${SYSROOT}/etc/portage/
 }}}
 
 = Bootstrap the system =

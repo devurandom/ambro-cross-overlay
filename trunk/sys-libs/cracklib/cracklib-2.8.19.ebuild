@@ -68,6 +68,9 @@ src_configure() {
 }
 
 src_compile() {
+	# https://bugs.gentoo.org/show_bug.cgi?id=167248
+	epatch "${FILESDIR}"/${PN}-2.8.19-portable-dictionary.patch
+
 	default
 	do_python
 }

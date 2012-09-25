@@ -1,0 +1,174 @@
+diff -urN cracklib-2.8.19/lib/packlib.c cracklib-2.8.19.new/lib/packlib.c
+--- cracklib-2.8.19/lib/packlib.c	2010-09-29 16:58:06.000000000 +0200
++++ cracklib-2.8.19.new/lib/packlib.c	2012-09-25 18:03:00.847577333 +0200
+@@ -59,6 +59,73 @@
+     return (pdesc64.header.pih_magic == PIH_MAGIC);
+ }
+ 
++static uint16_t read_little_endian16 (const uint8_t *bytes)
++{
++	return (
++		((uint16_t)bytes[0] << 0) |
++		((uint16_t)bytes[1] << 8)
++	);
++}
++
++static uint32_t read_little_endian32 (const uint8_t *bytes)
++{
++	return (
++		((uint32_t)bytes[0] << 0) |
++		((uint32_t)bytes[1] << 8) |
++		((uint32_t)bytes[2] << 16) |
++		((uint32_t)bytes[3] << 24)
++	);
++}
++
++static void write_little_endian16 (uint16_t x, uint8_t *bytes)
++{
++	bytes[0] = x >> 0;
++	bytes[1] = x >> 8;
++}
++
++static void write_little_endian32 (uint32_t x, uint8_t *bytes)
++{
++	bytes[0] = x >> 0;
++	bytes[1] = x >> 8;
++	bytes[2] = x >> 16;
++	bytes[3] = x >> 24;
++}
++
++static struct pi_header header_to_portable (struct pi_header x)
++{
++	struct pi_header y;
++	write_little_endian32(x.pih_magic, (uint8_t *)&y.pih_magic);
++	write_little_endian32(x.pih_numwords, (uint8_t *)&y.pih_numwords);
++	write_little_endian16(x.pih_blocklen, (uint8_t *)&y.pih_blocklen);
++	write_little_endian16(x.pih_pad, (uint8_t *)&y.pih_pad);
++	return y;
++}
++
++static struct pi_header header_from_portable (struct pi_header x)
++{
++	struct pi_header y;
++	y.pih_magic = read_little_endian32((uint8_t *)&x.pih_magic);
++	y.pih_numwords = read_little_endian32((uint8_t *)&x.pih_numwords);
++	y.pih_blocklen = read_little_endian16((uint8_t *)&x.pih_blocklen);
++	y.pih_pad = read_little_endian16((uint8_t *)&x.pih_pad);
++	return y;
++}
++
++static void hwms_from_portable (uint32_t *hwms)
++{
++	int i;
++	for (i = 0; i < 256; i++) {
++		hwms[i] = read_little_endian32((uint8_t *)&hwms[i]);
++	}
++}
++
++static void hwms_to_portable (uint32_t *hwms)
++{
++	int i;
++	for (i = 0; i < 256; i++) {
++		write_little_endian32(hwms[i], (uint8_t *)&hwms[i]);
++	}
++}
+ 
+ PWDICT *
+ PWOpen(prefix, mode)
+@@ -74,6 +141,7 @@
+     FILE *dfp;
+     FILE *ifp;
+     FILE *wfp;
++    struct pi_header phdr;
+ 
+     if (pdesc.header.pih_magic == PIH_MAGIC)
+     {
+@@ -147,13 +215,15 @@
+ 	pdesc.header.pih_magic = PIH_MAGIC;
+ 	pdesc.header.pih_blocklen = NUMWORDS;
+ 	pdesc.header.pih_numwords = 0;
+-
+-	fwrite((char *) &pdesc.header, sizeof(pdesc.header), 1, ifp);
++	
++	phdr = header_to_portable(pdesc.header);
++	fwrite((char *) &phdr, sizeof(phdr), 1, ifp);
+     } else
+     {
+ 	pdesc.flags &= ~PFOR_WRITE;
+ 
+-	if (!fread((char *) &pdesc.header, sizeof(pdesc.header), 1, ifp))
++	
++	if (!fread((char *) &phdr, sizeof(phdr), 1, ifp))
+ 	{
+ 	    fprintf(stderr, "%s: error reading header\n", prefix);
+ 
+@@ -171,6 +241,8 @@
+ 	    }
+ 	    return ((PWDICT *) 0);
+ 	}
++	
++	pdesc.header = header_from_portable(phdr);
+ 
+         if ((pdesc.header.pih_magic == 0) || (pdesc.header.pih_numwords == 0))
+         {
+@@ -294,9 +366,12 @@
+                     pdesc.hwms[i] = pdesc64.hwms[i];
+                 }
+             } 
+-            else if (fread(pdesc.hwms, 1, sizeof(pdesc.hwms), wfp) != sizeof(pdesc.hwms))
+-	    {
+-		pdesc.flags &= ~PFOR_USEHWMS;
++            else {
++		if (fread(pdesc.hwms, 1, sizeof(pdesc.hwms), wfp) != sizeof(pdesc.hwms)) {
++			pdesc.flags &= ~PFOR_USEHWMS;
++		} else {
++			hwms_from_portable(pdesc.hwms);
++		}
+ 	    }
+ #if DEBUG
+             for (i=1; i<=0xff; i++)
+@@ -330,8 +405,9 @@
+ 	    fprintf(stderr, "index magic fseek failed\n");
+ 	    return (-1);
+ 	}
+-
+-	if (!fwrite((char *) &pwp->header, sizeof(pwp->header), 1, pwp->ifp))
++	
++	struct pi_header phdr = header_to_portable(pwp->header);
++	if (!fwrite((char *) &phdr, sizeof(phdr), 1, pwp->ifp))
+ 	{
+ 	    fprintf(stderr, "index magic fwrite failed\n");
+ 	    return (-1);
+@@ -350,6 +426,7 @@
+ 	    	printf("hwm[%02x] = %d\n", i, pwp->hwms[i]);
+ #endif
+ 	    }
++	    hwms_to_portable(pwp->hwms);
+ 	    fwrite(pwp->hwms, 1, sizeof(pwp->hwms), pwp->wfp);
+ 	}
+     }
+@@ -399,12 +476,13 @@
+     if ((pwp->flags & PFOR_FLUSH) || !(pwp->count % NUMWORDS))
+     {
+ 	int i;
+-	uint32_t datum;
++	uint32_t datum, pdatum;
+ 	register char *ostr;
+ 
+ 	datum = (uint32_t) ftell(pwp->dfp);
+-
+-	fwrite((char *) &datum, sizeof(datum), 1, pwp->ifp);
++	
++	write_little_endian32(datum, (uint8_t *)&pdatum);
++	fwrite((char *) &pdatum, sizeof(pdatum), 1, pwp->ifp);
+ 
+ 	fputs(pwp->data[0], pwp->dfp);
+ 	putc(0, pwp->dfp);
+@@ -486,6 +564,7 @@
+            perror("(index fread failed)");
+            return ((char *) 0);
+        }
++       datum = read_little_endian32((uint8_t *)&datum);
+     }
+ 
+ 	int r = 1;

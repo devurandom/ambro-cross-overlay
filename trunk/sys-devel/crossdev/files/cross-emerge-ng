@@ -20,4 +20,4 @@ if [[ -z $DONT_WRAP_COMPILERS ]]; then
         export CXX="__PREFIX__/bin/chost-g++"
 fi
 
-exec emerge --crosscompile "$@"
+exec emerge "$@"

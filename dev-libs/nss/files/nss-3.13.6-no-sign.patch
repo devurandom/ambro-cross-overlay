@@ -1,0 +1,21 @@
+diff -urN nss-3.13.6/mozilla/security/nss/cmd/shlibsign/Makefile nss-3.13.6.new/mozilla/security/nss/cmd/shlibsign/Makefile
+--- nss-3.13.6/mozilla/security/nss/cmd/shlibsign/Makefile	2009-08-07 19:06:37.000000000 +0000
++++ nss-3.13.6.new/mozilla/security/nss/cmd/shlibsign/Makefile	2012-09-25 12:34:18.384233983 +0000
+@@ -109,15 +109,13 @@
+ 
+ SRCDIR = $(call core_abspath,.)
+ 
+-%.chk: %.$(DLL_SUFFIX) 
++%.chk: %.$(DLL_SUFFIX)
+ ifeq ($(OS_TARGET), OS2)
+ 	cd $(OBJDIR) ; cmd.exe /c $(SRCDIR)/sign.cmd $(DIST) \
+ 	$(call core_abspath,$(OBJDIR)) $(OS_TARGET) \
+ 	$(call core_abspath,$(NSPR_LIB_DIR)) $(call core_abspath,$<)
+ else
+-	cd $(OBJDIR) ; sh $(SRCDIR)/sign.sh $(call core_abspath,$(DIST)) \
+-	$(call core_abspath,$(OBJDIR)) $(OS_TARGET) \
+-	$(call core_abspath,$(NSPR_LIB_DIR)) $(call core_abspath,$<)
++	touch $@
+ endif
+ 
+ libs install :: $(CHECKLOC)

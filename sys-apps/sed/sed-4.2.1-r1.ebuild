@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-apps/sed/sed-4.2.1-r1.ebuild,v 1.12 2012/08/26 17:00:34 armin76 Exp $
 
-inherit eutils flag-o-matic toolchain-funcs
+inherit autotools eutils flag-o-matic toolchain-funcs
 
 DESCRIPTION="Super-useful stream editor"
 HOMEPAGE="http://sed.sourceforge.net/"
@@ -36,6 +36,12 @@ src_unpack() {
 	epatch "${FILESDIR}"/${PN}-4.1.5-alloca.patch
 	epatch "${FILESDIR}"/${P}-handle-incomplete-sequences-as-if-they-were-invalid.patch #284403
 	# don't use sed here if we have to recover a broken host sed
+
+	if tc-is-cross-compiler; then
+		# https://bugs.gentoo.org/show_bug.cgi?id=436256
+		epatch "${FILESDIR}"/${P}-cross-compile.patch
+		eautoreconf
+	fi
 }
 
 src_compile() {

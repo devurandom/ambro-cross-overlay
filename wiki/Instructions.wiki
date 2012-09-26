@@ -75,7 +75,7 @@ Now we set up some configuration for Portage.
 
 {{{
 mkdir -p ${SYSROOT}/etc/portage
-ln -s /usr/portage/profiles/default/linux/arm ${SYSROOT}/etc/make.profile
+ln -s /usr/portage/profiles/default/linux/arm/10.0 ${SYSROOT}/etc/make.profile
 }}}
 
 Create ${SYSROOT}/etc/make.conf. Make sure to adjust the overlay path.

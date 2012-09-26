@@ -18,16 +18,19 @@ PORTDIR_OVERLAY="
 "
 }}}
 
-Then reinstall the following packages, and make sure you have the following packages installed *from this overlay*:
-
-  * portage
-  * crossdev
-  * python
-
-Note than you first have to install portage, so that the python ebuild which uses HDEPEND will work:
+First you have to install Portage version at least 2.1.11.22 or 2.2.0_alpha133. This is because some ebuilds in this overlay use the experimental [http://blogs.gentoo.org/zmedico/2012/09/25/experimental-eapi-5-hdepend/ HDEPEND EAPI].
 
 {{{
-emerge -av sys-apps/portage::ambro-cross
+<sync portage however you do that>
+emerge -av1 sys-apps/portage
+}}}
+
+Then reinstall the following packages, and make sure you have the following packages installed *from this overlay*:
+
+  * sys-devel/crossdev
+  * dev-lang/python
+
+{{{
 emerge -av sys-devel/crossdev::ambro-cross dev-lang/python::ambro-cross
 }}}
 

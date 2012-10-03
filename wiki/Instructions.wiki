@@ -22,7 +22,9 @@ First you have to install Portage version at least 2.1.11.22 or 2.2.0_alpha133. 
 
 {{{
 <sync portage however you do that>
+<unmask portage in /etc/portage/package.keywords>
 emerge -av1 sys-apps/portage
+<MAKE SURE IT'S NEW ENOUGH, SEE ABOVE>
 }}}
 
 Then reinstall the following packages, and make sure you have the following packages installed *from this overlay*:

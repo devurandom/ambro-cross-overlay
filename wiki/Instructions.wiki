@@ -143,7 +143,7 @@ groupadd -g 22 sshd
 useradd -g 22 -u 22 -d /var/empty -s /sbin/nologin sshd
 }}}
 
-By default, udevd is not started. To fix it, just add the udev service to the boot runlevel:
+Udevd may not be started automatically. To fix it, just add the udev service to the boot runlevel:
 
 {{{
 rc-update add udev boot

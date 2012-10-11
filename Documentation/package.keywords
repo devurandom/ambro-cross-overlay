@@ -7,12 +7,19 @@ sys-apps/util-linux
 sys-apps/groff
 sys-apps/sysvinit # not broken, dependency only
 sys-libs/gdbm
+dev-libs/elfutils
 
 # other stuff in overlay
 dev-libs/libgpg-error
 dev-libs/libgcrypt
 dev-libs/nss
 dev-libs/nspr
-app-admin/syslog-ng
+
+# need new portage for HDEPEND support
+sys-apps/portage
+
+# stuff in portage that works
+app-misc/tmux
 net-p2p/rtorrent **
 net-libs/libtorrent **
+sys-process/schedtool **

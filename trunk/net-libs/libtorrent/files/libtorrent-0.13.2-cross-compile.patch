@@ -1,0 +1,76 @@
+diff -urN libtorrent-0.13.2/scripts/checks.m4 libtorrent-0.13.2.new/scripts/checks.m4
+--- libtorrent-0.13.2/scripts/checks.m4	2012-04-12 09:44:23.000000000 +0000
++++ libtorrent-0.13.2.new/scripts/checks.m4	2012-10-11 14:21:56.599122688 +0000
+@@ -73,26 +73,6 @@
+     ])
+ ])
+ 
+-
+-AC_DEFUN([TORRENT_CHECK_KQUEUE], [
+-  AC_MSG_CHECKING(for kqueue support)
+-
+-  AC_LINK_IFELSE([AC_LANG_SOURCE([
+-      #include <sys/time.h>  /* Because OpenBSD's sys/event.h fails to compile otherwise. Yeah... */
+-      #include <sys/event.h>
+-      int main() {
+-        int fd = kqueue();
+-        return 0;
+-      }
+-      ])],
+-    [
+-      AC_DEFINE(USE_KQUEUE, 1, Use kqueue.)
+-      AC_MSG_RESULT(yes)
+-    ], [
+-      AC_MSG_RESULT(no)
+-    ])
+-])
+-
+ AC_DEFUN([TORRENT_CHECK_KQUEUE_SOCKET_ONLY], [
+   AC_MSG_CHECKING(whether kqueue supports pipes and ptys)
+ 
+@@ -131,13 +111,32 @@
+     ])
+ ])
+ 
++AC_DEFUN([TORRENT_CHECK_KQUEUE], [
++  AC_MSG_CHECKING(for kqueue support)
++
++  AC_LINK_IFELSE([AC_LANG_SOURCE([
++      #include <sys/time.h>  /* Because OpenBSD's sys/event.h fails to compile otherwise. Yeah... */
++      #include <sys/event.h>
++      int main() {
++        int fd = kqueue();
++        return 0;
++      }
++      ])],
++    [
++      AC_DEFINE(USE_KQUEUE, 1, Use kqueue.)
++      AC_MSG_RESULT(yes)
++      TORRENT_CHECK_KQUEUE_SOCKET_ONLY
++    ], [
++      AC_MSG_RESULT(no)
++    ])
++])
++
+ AC_DEFUN([TORRENT_WITH_KQUEUE], [
+   AC_ARG_WITH(kqueue,
+     [  --with-kqueue           enable kqueue. [[default=no]]],
+     [
+         if test "$withval" = "yes"; then
+           TORRENT_CHECK_KQUEUE
+-          TORRENT_CHECK_KQUEUE_SOCKET_ONLY
+         fi
+     ])
+ ])
+@@ -149,11 +148,9 @@
+     [
+       if test "$withval" = "yes"; then
+         TORRENT_CHECK_KQUEUE
+-        TORRENT_CHECK_KQUEUE_SOCKET_ONLY
+       fi
+     ], [
+         TORRENT_CHECK_KQUEUE
+-        TORRENT_CHECK_KQUEUE_SOCKET_ONLY
+     ])
+ ])
+ 

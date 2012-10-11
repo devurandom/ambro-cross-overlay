@@ -4,7 +4,7 @@
 
 EAPI=4
 
-inherit eutils libtool toolchain-funcs
+inherit autotools eutils libtool toolchain-funcs
 
 DESCRIPTION="BitTorrent library written in C++ for *nix"
 HOMEPAGE="http://libtorrent.rakshasa.no/"
@@ -19,11 +19,13 @@ RDEPEND="
 	>=dev-libs/libsigc++-2.2.2:2
 	ssl? ( dev-libs/openssl )"
 DEPEND="${RDEPEND}
-	virtual/pkgconfig"
+	virtual/pkgconfig
+	dev-util/cppunit"
 
 src_prepare() {
 #	epatch "${FILESDIR}"/download_constructor.diff
-	elibtoolize
+	epatch "${FILESDIR}"/libtorrent-0.13.2-cross-compile.patch
+	eautoreconf
 }
 
 src_configure() {

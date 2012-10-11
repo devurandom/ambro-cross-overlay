@@ -15,6 +15,7 @@ IUSE=""
 
 src_prepare() {
 	sed -i '/^CFLAGS=/d;/^install:/s/install-doc//' Makefile
+	sed -i '/^CC=/d' Makefile
 }
 
 src_install() {

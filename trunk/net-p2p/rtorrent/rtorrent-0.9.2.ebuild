@@ -4,7 +4,7 @@
 
 EAPI=4
 
-inherit eutils
+inherit autotools eutils
 
 DESCRIPTION="BitTorrent Client using libtorrent"
 HOMEPAGE="http://libtorrent.rakshasa.no/"
@@ -31,6 +31,10 @@ DOCS=( doc/rtorrent.rc )
 src_prepare() {
 	# bug #358271
 	epatch "${FILESDIR}"/${PN}-0.9.1-ncurses.patch
+
+	epatch "${FILESDIR}"/${PN}-0.9.2-cross-compile.patch
+
+	eautoreconf
 }
 
 src_configure() {

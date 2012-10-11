@@ -1,0 +1,12 @@
+diff -urN neon-0.29.6/macros/neon.m4 neon-0.29.6.new/macros/neon.m4
+--- neon-0.29.6/macros/neon.m4	2011-05-03 12:14:56.000000000 +0000
++++ neon-0.29.6.new/macros/neon.m4	2012-10-08 10:49:02.063875168 +0000
+@@ -855,7 +855,7 @@
+ 
+ m4_define([ne_cvar], m4_translit(ne_cv_pkg_[$2], [.-], [__]))dnl
+ 
+-AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
++PKG_PROG_PKG_CONFIG()
+ if test "$PKG_CONFIG" = "no"; then
+    : Not using pkg-config
+    $4

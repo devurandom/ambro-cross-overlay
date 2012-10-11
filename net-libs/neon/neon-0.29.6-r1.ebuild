@@ -47,6 +47,8 @@ src_prepare() {
 	sed -i -e "s/ALL_LINGUAS=.*/ALL_LINGUAS=\"${linguas}\"/g" configure.in
 
 	epatch "${FILESDIR}"/${PN}-0.29.6-no-ssl-check.patch
+	epatch "${FILESDIR}"/${PN}-0.29.6-cross-pkg-config.patch
+	epatch "${FILESDIR}"/${PN}-0.29.6-cross-libxml2.patch
 	AT_M4DIR="macros" eautoreconf
 
 	elibtoolize

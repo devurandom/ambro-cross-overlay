@@ -48,3 +48,8 @@ src_configure() {
 		$(use_enable ssl openssl) \
 		${myconf}
 }
+
+src_install() {
+	default_src_install
+	rm "${D}"/usr/$(get_libdir)/libtorrent.la || die
+}

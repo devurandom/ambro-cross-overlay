@@ -1,0 +1,30 @@
+diff -urN neon-0.29.6/macros/neon-xml-parser.m4 neon-0.29.6.new/macros/neon-xml-parser.m4
+--- neon-0.29.6/macros/neon-xml-parser.m4	2008-07-19 21:52:35.000000000 +0000
++++ neon-0.29.6.new/macros/neon-xml-parser.m4	2012-10-08 13:18:31.548650429 +0000
+@@ -44,20 +44,17 @@
+ 
+ dnl Find libxml2: run $1 if found, else $2
+ AC_DEFUN([NE_XML_LIBXML2], [
+-AC_CHECK_PROG(XML2_CONFIG, xml2-config, xml2-config)
+-if test -n "$XML2_CONFIG"; then
+-    neon_xml_parser_message="libxml `$XML2_CONFIG --version`"
++PKG_CHECK_MODULES(LIBXML2, libxml-2.0, [
++    neon_xml_parser_message="libxml `$PKG_CONFIG --modversion libxml-2.0`"
+     AC_DEFINE(HAVE_LIBXML, 1, [Define if you have libxml])
+-    # xml2-config in some versions erroneously includes -I/include
+-    # in the --cflags output.
+-    CPPFLAGS="$CPPFLAGS `$XML2_CONFIG --cflags | sed 's| -I/include||g'`"
+-    NEON_LIBS="$NEON_LIBS `$XML2_CONFIG --libs | sed 's|-L/usr/lib ||g'`"
++    CPPFLAGS="$CPPFLAGS $LIBXML2_CFLAGS"
++    NEON_LIBS="$NEON_LIBS $LIBXML2_LIBS"
+     AC_CHECK_HEADERS(libxml/xmlversion.h libxml/parser.h,,[
+       AC_MSG_ERROR([could not find parser.h, libxml installation problem?])])
+     neon_xml_parser=libxml2
+-else
++], [
+     $1
+-fi
++])
+ ])
+ 
+ dnl Configure for a bundled expat build.

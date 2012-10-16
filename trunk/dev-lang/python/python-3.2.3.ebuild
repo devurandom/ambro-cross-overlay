@@ -169,11 +169,11 @@ src_configure() {
 
 	if tc-is-cross-compiler; then
 		# configure build python
-		OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
+		OPT="-O1" CFLAGS="${HOST_CFLAGS}" LDFLAGS="${HOST_LDFLAGS}" CC="${HOSTCC}" \
 		./configure --{build,host}=${CBUILD} || die "failed to configure build python"
 
 		# build just the parser generator
-		OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
+		OPT="-O1" CFLAGS="${HOST_CFLAGS}" LDFLAGS="${HOST_LDFLAGS}" CC="${HOSTCC}" \
 		emake Parser/pgen || die "failed to make parser generator"
 
 		# rename pgen so it isn't overwritten by cross build

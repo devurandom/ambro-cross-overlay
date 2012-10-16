@@ -77,28 +77,28 @@ src_prepare() {
 		epatch "${WORKDIR}/${PV}-${PATCHSET_REVISION}"
 	epatch "${FILESDIR}"/${PN}-3.2.3-x32.patch
 
-        if tc-is-cross-compiler; then
-                # Patch contains three fixes:
-                # 1. setup.py does not append "-I/usr/include" to the CFLAGS when
-                # compiling the python modules for the target system.  Otherwise the
-                # compilation can fail, e.g. with weird asm errors, due to wrong system
-                # headers being used.  It does not suffice to have the correct
-                # "-I${SYSROOT}/usr/include" in the CFLAGS variable in make.conf as the
-                # gcc include directory search order will always look in those
-                # directories last.
-                # 2. Use hostpython and header files from ${SYSROOT} for regen
-                # 3. Makefile uses hostpython for compileall
-                epatch "${FILESDIR}"/fix-cross-compile.patch
-        fi
+	if tc-is-cross-compiler; then
+		# Patch contains three fixes:
+		# 1. setup.py does not append "-I/usr/include" to the CFLAGS when
+		# compiling the python modules for the target system.  Otherwise the
+		# compilation can fail, e.g. with weird asm errors, due to wrong system
+		# headers being used.  It does not suffice to have the correct
+		# "-I${SYSROOT}/usr/include" in the CFLAGS variable in make.conf as the
+		# gcc include directory search order will always look in those
+		# directories last.
+		# 2. Use hostpython and header files from ${SYSROOT} for regen
+		# 3. Makefile uses hostpython for compileall
+		epatch "${FILESDIR}"/fix-cross-compile.patch
+	fi
 
-        # Patch makes setup.py and distutils read the PYTHON_SETUP_SYSROOT
-        # variable to look for libraries and headers in the target system
-        # and not on the host. Without this it can find libraries on the
-        # host which don't exist in the target and fail to link.
-        # Example: if ncurses is built without unicode support, linking fails
-        # becuse libncursesw is missing, but present on host.
-        # NOTE: the host python must be compiled with this!
-        epatch "${FILESDIR}"/python-3.2-sysroot.patch
+	# Patch makes setup.py and distutils read the PYTHON_SETUP_SYSROOT
+	# variable to look for libraries and headers in the target system
+	# and not on the host. Without this it can find libraries on the
+	# host which don't exist in the target and fail to link.
+	# Example: if ncurses is built without unicode support, linking fails
+	# because libncursesw is missing, but present on host.
+	# NOTE: the host python must be compiled with this!
+	epatch "${FILESDIR}"/python-3.2-sysroot.patch
 
 	if tc-is-cross-compiler; then
 		# Make sure above patch was applied to host python.
@@ -169,21 +169,21 @@ src_configure() {
 
 	if tc-is-cross-compiler; then
 		# configure build python
-                OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
-                ./configure --{build,host}=${CBUILD} || die "failed to configure build python"
+		OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
+		./configure --{build,host}=${CBUILD} || die "failed to configure build python"
 
 		# build just the parser generator
-                OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
-                emake Parser/pgen || die "failed to make parser generator"
+		OPT="-O1" CFLAGS="" LDFLAGS="" CC="" \
+		emake Parser/pgen || die "failed to make parser generator"
 
 		# rename pgen so it isn't overwritten by cross build
 		mv Parser/pgen Parser/hostpgen
 
 		# make cross build use the parser generator we have built
-                sed -i \
-                        -e "/^HOSTPYTHON/s:=.*:=./hostpython:" \
-                        -e "/^HOSTPGEN/s:=.*:=./Parser/hostpgen:" \
-                        Makefile.pre.in || die "sed failed"
+		sed -i \
+			-e "/^HOSTPYTHON/s:=.*:=./hostpython:" \
+			-e "/^HOSTPGEN/s:=.*:=./Parser/hostpgen:" \
+			Makefile.pre.in || die "sed failed"
 
 		# make it use the python from the build system
 		ln -s /usr/bin/python${SLOT} hostpython

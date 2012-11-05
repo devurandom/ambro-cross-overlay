@@ -1,0 +1,84 @@
+diff -urN Python-3.2.3/Lib/distutils/sysconfig.py Python-3.2.3.new/Lib/distutils/sysconfig.py
+--- Python-3.2.3/Lib/distutils/sysconfig.py	2012-11-05 22:31:04.431584121 +0000
++++ Python-3.2.3.new/Lib/distutils/sysconfig.py	2012-11-05 23:40:48.887645964 +0000
+@@ -12,6 +12,7 @@
+ import os
+ import re
+ import sys
++import __main__ as main
+ 
+ from .errors import DistutilsPlatformError
+ 
+@@ -23,6 +24,8 @@
+ # live in project/PCBuild9.  If we're dealing with an x64 Windows build,
+ # it'll live in project/PCbuild/amd64.
+ project_base = os.path.dirname(os.path.abspath(sys.executable))
++if hasattr(main, "this_is_python_build") and main.this_is_python_build:
++    project_base = os.path.dirname(os.path.abspath(main.__file__))
+ if os.name == "nt" and "pcbuild" in project_base[-8:].lower():
+     project_base = os.path.abspath(os.path.join(project_base, os.path.pardir))
+ # PC/VS7.1
+@@ -86,9 +89,8 @@
+             # the build directory may not be the source directory, we
+             # must use "srcdir" from the makefile to find the "Include"
+             # directory.
+-            base = os.path.dirname(os.path.abspath(sys.executable))
+             if plat_specific:
+-                return base
++                return project_base
+             else:
+                 incdir = os.path.join(get_config_var('srcdir'), 'Include')
+                 return os.path.normpath(incdir)
+@@ -263,7 +265,7 @@
+ def get_makefile_filename():
+     """Return full pathname of installed Makefile from the Python build."""
+     if python_build:
+-        return os.path.join(os.path.dirname(sys.executable), "Makefile")
++        return os.path.join(project_base, "Makefile")
+     lib_dir = get_python_lib(plat_specific=0, standard_lib=1)
+     config_file = 'config-{}{}'.format(get_python_version(), build_flags)
+     return os.path.join(lib_dir, config_file, 'Makefile')
+@@ -549,13 +551,12 @@
+         # testing, for example, we might be running a non-installed python
+         # from a different directory.
+         if python_build and os.name == "posix":
+-            base = os.path.dirname(os.path.abspath(sys.executable))
+             if (not os.path.isabs(_config_vars['srcdir']) and
+-                base != os.getcwd()):
++                project_base != os.getcwd()):
+                 # srcdir is relative and we are not in the same directory
+                 # as the executable. Assume executable is in the build
+                 # directory and make srcdir absolute.
+-                srcdir = os.path.join(base, _config_vars['srcdir'])
++                srcdir = os.path.join(project_base, _config_vars['srcdir'])
+                 _config_vars['srcdir'] = os.path.normpath(srcdir)
+ 
+         if sys.platform == 'darwin':
+diff -urN Python-3.2.3/setup.py Python-3.2.3.new/setup.py
+--- Python-3.2.3/setup.py	2012-11-05 22:31:04.378584120 +0000
++++ Python-3.2.3.new/setup.py	2012-11-05 23:42:10.360647726 +0000
+@@ -3,10 +3,14 @@
+ 
+ __version__ = "$Revision$"
+ 
++# examined by distutils.sysconfig
++this_is_python_build = True
++
+ import sys, os, imp, re, optparse
+ from glob import glob
+-import sysconfig
++import sysconfig as base_sysconfig
+ 
++from distutils import sysconfig
+ from distutils import log
+ from distutils import text_file
+ from distutils.errors import *
+@@ -215,7 +219,7 @@
+ 
+         # Python header files
+         headers = [sysconfig.get_config_h_filename()]
+-        headers += glob(os.path.join(sysconfig.get_path('platinclude'), "*.h"))
++        headers += glob(os.path.join(base_sysconfig.get_path('platinclude'), "*.h"))
+ 
+         for ext in self.extensions[:]:
+             ext.sources = [ find_module_file(filename, moddirlist)

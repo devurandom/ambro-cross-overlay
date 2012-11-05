@@ -100,6 +100,8 @@ src_prepare() {
 	# NOTE: the host python must be compiled with this!
 	epatch "${FILESDIR}"/python-3.2-sysroot.patch
 
+        epatch "${FILESDIR}"/python-3.2-cross-makefile.patch
+
 	if tc-is-cross-compiler; then
 		# Make sure above patch was applied to host python.
 		local command='from distutils import unixccompiler; unixccompiler.supports_sysroot()'

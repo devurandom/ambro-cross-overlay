@@ -1,6 +1,6 @@
-diff -urN Python-3.2.3.orig/Lib/distutils/unixccompiler.py Python-3.2.3/Lib/distutils/unixccompiler.py
---- Python-3.2.3.orig/Lib/distutils/unixccompiler.py	2012-09-16 18:26:29.961789357 +0200
-+++ Python-3.2.3/Lib/distutils/unixccompiler.py	2012-09-16 22:40:50.077271550 +0200
+diff -urN Python-3.2.3/Lib/distutils/unixccompiler.py Python-3.2.3.new/Lib/distutils/unixccompiler.py
+--- Python-3.2.3/Lib/distutils/unixccompiler.py	2012-04-11 06:54:02.000000000 +0000
++++ Python-3.2.3.new/Lib/distutils/unixccompiler.py	2012-11-05 21:46:00.105543637 +0000
 @@ -38,6 +38,26 @@
  #     should just happily stuff them into the preprocessor/compiler/linker
  #     options and carry on.
@@ -66,9 +66,9 @@ diff -urN Python-3.2.3.orig/Lib/distutils/unixccompiler.py Python-3.2.3/Lib/dist
                  dir.startswith('/System/') or (
                  dir.startswith('/usr/') and not dir.startswith('/usr/local/'))):
  
-diff -urN Python-3.2.3.orig/setup.py Python-3.2.3/setup.py
---- Python-3.2.3.orig/setup.py	2012-09-16 18:26:30.213821389 +0200
-+++ Python-3.2.3/setup.py	2012-09-16 19:45:03.265826057 +0200
+diff -urN Python-3.2.3/setup.py Python-3.2.3.new/setup.py
+--- Python-3.2.3/setup.py	2012-04-11 06:54:08.000000000 +0000
++++ Python-3.2.3.new/setup.py	2012-11-05 21:47:25.688544009 +0000
 @@ -61,6 +61,13 @@
      """
      return (path.startswith('/usr/') and not path.startswith('/usr/local')) or path.startswith('/System/')
@@ -83,6 +83,45 @@ diff -urN Python-3.2.3.orig/setup.py Python-3.2.3/setup.py
  def find_file(filename, std_dirs, paths):
      """Searches for the directory where a given file is located,
      and returns a possibly-empty list of additional directories, or None
+@@ -72,27 +79,27 @@
+     'paths' is a list of additional locations to check; if the file is
+         found in one of them, the resulting list will contain the directory.
+     """
+-    if sys.platform == 'darwin':
+-        # Honor the MacOSX SDK setting when one was specified.
+-        # An SDK is a directory with the same structure as a real
+-        # system, but with only header files and libraries.
+-        sysroot = macosx_sdk_root()
++    sysroot = get_sysroot()
+ 
+     # Check the standard locations
+     for dir in std_dirs:
+-        f = os.path.join(dir, filename)
++        f = os.path.join(sysroot, dir, filename)
+ 
+-        if sys.platform == 'darwin' and is_macosx_sdk_path(dir):
+-            f = os.path.join(sysroot, dir[1:], filename)
++        if sys.platform == 'darwin':
++            f = os.path.join(dir, filename)
++            if is_macosx_sdk_path(dir):
++                f = os.path.join(sysroot, dir[1:], filename)
+ 
+         if os.path.exists(f): return []
+ 
+     # Check the additional directories
+     for dir in paths:
+-        f = os.path.join(dir, filename)
++        f = os.path.join(sysroot, dir, filename)
+ 
+-        if sys.platform == 'darwin' and is_macosx_sdk_path(dir):
+-            f = os.path.join(sysroot, dir[1:], filename)
++        if sys.platform == 'darwin':
++            f = os.path.join(dir, filename)
++            if is_macosx_sdk_path(dir):
++                f = os.path.join(sysroot, dir[1:], filename)
+ 
+         if os.path.exists(f):
+             return [dir]
 @@ -105,8 +112,7 @@
      if result is None:
          return None

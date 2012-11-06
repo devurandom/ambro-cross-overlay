@@ -100,14 +100,22 @@ src_prepare() {
 	# NOTE: the host python must be compiled with this!
 	epatch "${FILESDIR}"/python-3.2-sysroot.patch
 
+	# Patch distutils and setup.py to read the newly generated Makefile,
+	# not the installed one from the host Python. This makes sure host
+	# CFLAGS are not being used for cross-compile, and also fixes some
+	# include paths, like for libffi.
         epatch "${FILESDIR}"/python-3.2-cross-makefile.patch
 
 	if tc-is-cross-compiler; then
-		# Make sure above patch was applied to host python.
+		# Make sure above patches were applied to host python.
 		local command='from distutils import unixccompiler; unixccompiler.supports_sysroot()'
 		if ! /usr/bin/python${SLOT} -c "${command}"; then
 			die "Sysroot patch not applied to host Python, reinstall it from this ebuild!"
 		fi
+		local command='from distutils import sysconfig; sysconfig.supports_cross_python_build()'
+                if ! /usr/bin/python${SLOT} -c "${command}"; then
+                        die "Makefile patch not applied to host Python, reinstall it from this ebuild!"
+                fi
 	fi
 
 	sed -i -e "s:@@GENTOO_LIBDIR@@:$(get_libdir):g" \

@@ -1,7 +1,7 @@
 diff -urN Python-3.2.3/Lib/distutils/sysconfig.py Python-3.2.3.new/Lib/distutils/sysconfig.py
 --- Python-3.2.3/Lib/distutils/sysconfig.py	2012-11-05 22:31:04.431584121 +0000
-+++ Python-3.2.3.new/Lib/distutils/sysconfig.py	2012-11-05 23:40:48.887645964 +0000
-@@ -12,6 +12,7 @@
++++ Python-3.2.3.new/Lib/distutils/sysconfig.py	2012-11-06 00:05:26.913668577 +0000
+@@ -12,9 +12,13 @@
  import os
  import re
  import sys
@@ -9,7 +9,13 @@ diff -urN Python-3.2.3/Lib/distutils/sysconfig.py Python-3.2.3.new/Lib/distutils
  
  from .errors import DistutilsPlatformError
  
-@@ -23,6 +24,8 @@
++def supports_cross_python_build():
++    return True
++
+ # These are needed in a couple of spots, so just compute them once.
+ PREFIX = os.path.normpath(sys.prefix)
+ EXEC_PREFIX = os.path.normpath(sys.exec_prefix)
+@@ -23,6 +27,8 @@
  # live in project/PCBuild9.  If we're dealing with an x64 Windows build,
  # it'll live in project/PCbuild/amd64.
  project_base = os.path.dirname(os.path.abspath(sys.executable))
@@ -18,7 +24,7 @@ diff -urN Python-3.2.3/Lib/distutils/sysconfig.py Python-3.2.3.new/Lib/distutils
  if os.name == "nt" and "pcbuild" in project_base[-8:].lower():
      project_base = os.path.abspath(os.path.join(project_base, os.path.pardir))
  # PC/VS7.1
-@@ -86,9 +89,8 @@
+@@ -86,9 +92,8 @@
              # the build directory may not be the source directory, we
              # must use "srcdir" from the makefile to find the "Include"
              # directory.
@@ -29,7 +35,7 @@ diff -urN Python-3.2.3/Lib/distutils/sysconfig.py Python-3.2.3.new/Lib/distutils
              else:
                  incdir = os.path.join(get_config_var('srcdir'), 'Include')
                  return os.path.normpath(incdir)
-@@ -263,7 +265,7 @@
+@@ -263,7 +268,7 @@
  def get_makefile_filename():
      """Return full pathname of installed Makefile from the Python build."""
      if python_build:
@@ -38,7 +44,7 @@ diff -urN Python-3.2.3/Lib/distutils/sysconfig.py Python-3.2.3.new/Lib/distutils
      lib_dir = get_python_lib(plat_specific=0, standard_lib=1)
      config_file = 'config-{}{}'.format(get_python_version(), build_flags)
      return os.path.join(lib_dir, config_file, 'Makefile')
-@@ -549,13 +551,12 @@
+@@ -549,13 +554,12 @@
          # testing, for example, we might be running a non-installed python
          # from a different directory.
          if python_build and os.name == "posix":

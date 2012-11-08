@@ -49,6 +49,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-0.29.6-no-ssl-check.patch
 	epatch "${FILESDIR}"/${PN}-0.29.6-cross-pkg-config.patch
 	epatch "${FILESDIR}"/${PN}-0.29.6-cross-libxml2.patch
+	epatch "${FILESDIR}"/${PN}-0.29.6-cross-libxml2-fix.patch
 	AT_M4DIR="macros" eautoreconf
 
 	elibtoolize

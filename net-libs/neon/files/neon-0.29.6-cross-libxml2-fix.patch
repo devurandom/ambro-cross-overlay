@@ -1,0 +1,11 @@
+diff -urN neon-0.29.6/macros/neon-xml-parser.m4 neon-0.29.6.new/macros/neon-xml-parser.m4
+--- neon-0.29.6/macros/neon-xml-parser.m4	2012-11-08 02:38:43.697840936 +0000
++++ neon-0.29.6.new/macros/neon-xml-parser.m4	2012-11-08 02:52:59.816819484 +0000
+@@ -44,6 +44,7 @@
+ 
+ dnl Find libxml2: run $1 if found, else $2
+ AC_DEFUN([NE_XML_LIBXML2], [
++PKG_PROG_PKG_CONFIG
+ PKG_CHECK_MODULES(LIBXML2, libxml-2.0, [
+     neon_xml_parser_message="libxml `$PKG_CONFIG --modversion libxml-2.0`"
+     AC_DEFINE(HAVE_LIBXML, 1, [Define if you have libxml])

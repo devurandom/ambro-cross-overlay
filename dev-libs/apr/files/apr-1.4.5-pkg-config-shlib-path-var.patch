@@ -1,0 +1,11 @@
+diff -urN apr-1.4.5/apr.pc.in apr-1.4.5.new/apr.pc.in
+--- apr-1.4.5/apr.pc.in	2012-11-10 17:21:31.065368077 +0000
++++ apr-1.4.5.new/apr.pc.in	2012-11-10 17:22:53.447366014 +0000
+@@ -3,6 +3,7 @@
+ libdir=@libdir@
+ APR_MAJOR_VERSION=@APR_MAJOR_VERSION@
+ includedir=@includedir@
++shlib_path_var=@shlibpath_var@
+ 
+ Name: APR
+ Description: The Apache Portable Runtime library

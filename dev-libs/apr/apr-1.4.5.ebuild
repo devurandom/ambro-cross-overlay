@@ -23,6 +23,8 @@ DEPEND="${RDEPEND}
 DOCS=(CHANGES NOTICE README)
 
 src_prepare() {
+        epatch "${FILESDIR}/apr-1.4.5-pkg-config-shlib-path-var.patch"
+
         if tc-is-cross-compiler; then
 		# Fix cross compile. Adds --tag=CC to libtool and fixes a size check function.
 		epatch "${FILESDIR}/apr-1.4.5-cross-compile.patch"

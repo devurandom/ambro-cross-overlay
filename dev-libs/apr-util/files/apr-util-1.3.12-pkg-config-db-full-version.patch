@@ -1,0 +1,150 @@
+diff -urN apr-util-1.3.12/apr-util.pc.in apr-util-1.3.12.new/apr-util.pc.in
+--- apr-util-1.3.12/apr-util.pc.in	2012-11-10 18:23:12.893275311 +0000
++++ apr-util-1.3.12.new/apr-util.pc.in	2012-11-10 19:08:20.722207457 +0000
+@@ -4,6 +4,7 @@
+ APRUTIL_MAJOR_VERSION=@APRUTIL_MAJOR_VERSION@
+ includedir=@includedir@
+ db_version=@apu_db_version@
++db_full_version=@apu_db_full_version@
+ 
+ Name: APR Utils
+ Description: Companion library for APR
+diff -urN apr-util-1.3.12/build/dbm.m4 apr-util-1.3.12.new/build/dbm.m4
+--- apr-util-1.3.12/build/dbm.m4	2012-11-10 18:23:12.891275311 +0000
++++ apr-util-1.3.12.new/build/dbm.m4	2012-11-10 19:07:50.603208209 +0000
+@@ -297,6 +297,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=1
++    apu_db_full_version=1
+   fi
+ ])
+ 
+@@ -320,6 +321,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=185
++    apu_db_full_version=185
+   fi
+ ])
+ 
+@@ -341,6 +343,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=2
++    apu_db_full_version=2
+   fi
+ ])
+ 
+@@ -362,6 +365,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=3
++    apu_db_full_version=3
+   fi
+ ])
+ 
+@@ -383,6 +387,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.0
+   fi
+ ])
+ 
+@@ -404,6 +409,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.1
+   fi
+ ])
+ 
+@@ -425,6 +431,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.2
+   fi
+ ])
+ dnl
+@@ -444,6 +451,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.3
+   fi
+ ])
+ dnl
+@@ -463,6 +471,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.4
+   fi
+ ])
+ dnl
+@@ -482,6 +491,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.5
+   fi
+ ])
+ dnl
+@@ -501,6 +511,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.6
+   fi
+ ])
+ dnl
+@@ -520,6 +531,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.7
+   fi
+ ])
+ dnl
+@@ -539,6 +551,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=4
++    apu_db_full_version=4.8
+   fi
+ ])
+ dnl
+@@ -558,6 +571,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=5
++    apu_db_full_version=5.0
+   fi
+ ])
+ dnl
+@@ -577,6 +591,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=5
++    apu_db_full_version=5.1
+   fi
+ ])
+ dnl
+@@ -596,6 +611,7 @@
+   )
+   if test "$apu_have_db" = "1"; then
+     apu_db_version=5
++    apu_db_full_version=5.2
+   fi
+ ])
+ 
+@@ -1038,6 +1054,7 @@
+   AC_SUBST(apu_have_db)
+   AC_SUBST(apu_db_header)
+   AC_SUBST(apu_db_version)
++  AC_SUBST(apu_db_full_version)
+ 
+   if test "$apu_have_db" = "1"; then
+     LDADD_dbm_db="-l$apu_db_lib"

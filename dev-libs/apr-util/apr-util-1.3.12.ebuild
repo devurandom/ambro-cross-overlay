@@ -62,6 +62,10 @@ src_configure() {
 		myconf+=" --without-berkeley-db"
 	fi
 
+	if ! tc-is-cross-compiler; then
+		myconf+=" --with-apr=/usr"
+	fi
+
 	econf \
 		--datadir=/usr/share/apr-util-1 \
 		--with-expat="$ROOT/usr" \

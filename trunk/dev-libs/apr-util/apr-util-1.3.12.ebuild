@@ -37,6 +37,7 @@ DOCS=(CHANGES NOTICE README)
 
 src_prepare() {
 	epatch "${FILESDIR}/${P}-bdb-5.2.patch"
+	epatch "${FILESDIR}/apr-util-1.3.12-pkg-config-db-version.patch"
 
 	if tc-is-cross-compiler; then
 		epatch "${FILESDIR}/apr-util-1.3.12-crosscompile.patch"

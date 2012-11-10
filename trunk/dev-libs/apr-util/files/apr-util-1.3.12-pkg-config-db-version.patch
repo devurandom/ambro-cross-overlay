@@ -1,0 +1,11 @@
+diff -urN apr-util-1.3.12/apr-util.pc.in apr-util-1.3.12.new/apr-util.pc.in
+--- apr-util-1.3.12/apr-util.pc.in	2012-11-10 18:01:37.094307783 +0000
++++ apr-util-1.3.12.new/apr-util.pc.in	2012-11-10 18:03:01.552305664 +0000
+@@ -3,6 +3,7 @@
+ libdir=@libdir@
+ APRUTIL_MAJOR_VERSION=@APRUTIL_MAJOR_VERSION@
+ includedir=@includedir@
++db_version=@apu_db_version@
+ 
+ Name: APR Utils
+ Description: Companion library for APR

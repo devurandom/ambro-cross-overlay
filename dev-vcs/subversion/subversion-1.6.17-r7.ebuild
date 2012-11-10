@@ -8,7 +8,8 @@ RESTRICT_PYTHON_ABIS="3.* *-jython *-pypy-*"
 WANT_AUTOMAKE="none"
 MY_P="${P/_/-}"
 
-inherit autotools base bash-completion db-use depend.apache elisp-common flag-o-matic java-pkg-opt-2 libtool multilib perl-module python user
+GENTOO_DEPEND_ON_PERL=no
+inherit autotools base bash-completion db-use depend.apache elisp-common flag-o-matic java-pkg-opt-2 libtool multilib perl-module python user toolchain-funcs
 
 DESCRIPTION="Advanced version control system"
 HOMEPAGE="http://subversion.apache.org/"
@@ -53,7 +54,6 @@ DEPEND="${CDEPEND}
 	webdav-neon? ( virtual/pkgconfig )"
 
 PATCHES=(
-		"${FILESDIR}/${PN}-1.6.0-disable_linking_against_unneeded_libraries.patch"
 		"${FILESDIR}/${PN}-1.6.2-local_library_preloading.patch"
 		"${FILESDIR}/${PN}-1.6.3-kwallet_window.patch"
 		"${FILESDIR}/${PN}-1.5.4-interix.patch"
@@ -65,9 +65,7 @@ want_apache
 
 pkg_setup() {
 	if use berkdb; then
-		local apu_bdb_version="$(${EPREFIX}/usr/bin/apu-1-config --includes \
-			| grep -Eoe '-I${EPREFIX}/usr/include/db[[:digit:]]\.[[:digit:]]' \
-			| sed 's:.*b::')"
+		local apu_bdb_version="$( $(tc-getPKG_CONFIG) apr-util-1 --variable=db_full_version )"
 		einfo
 		if [[ -z "${SVN_BDB_VERSION}" ]]; then
 			if [[ -n "${apu_bdb_version}" ]]; then
@@ -116,6 +114,11 @@ pkg_setup() {
 
 src_prepare() {
 	base_src_prepare
+
+	if tc-is-cross-compiler; then
+		epatch "${FILESDIR}/${PN}-1.6.17-pkg-config.patch"
+	fi
+
 	fperms +x build/transform_libtool_scripts.sh
 
 	sed -i \
@@ -170,8 +173,8 @@ src_configure() {
 
 	econf --libdir="${EPREFIX}/usr/$(get_libdir)" \
 		$(use_with apache2 apxs "${APXS}") \
-		$(use_with berkdb berkeley-db "db.h:${EPREFIX}/usr/include/db${SVN_BDB_VERSION}::db-${SVN_BDB_VERSION}") \
-		$(use_with ctypes-python ctypesgen "${EPREFIX}/usr") \
+		$(use_with berkdb berkeley-db "db.h:${EROOT}/usr/include/db${SVN_BDB_VERSION}::db-${SVN_BDB_VERSION}") \
+		$(use_with ctypes-python ctypesgen "${EROOT}/usr") \
 		$(use_enable dso runtime-module-search) \
 		$(use_with gnome-keyring) \
 		$(use_enable java javahl) \
@@ -179,17 +182,14 @@ src_configure() {
 		$(use_with kde kwallet) \
 		$(use_with sasl) \
 		$(use_with webdav-neon neon) \
-		$(use_with webdav-serf serf "${EPREFIX}/usr") \
+		$(use_with webdav-serf serf "${EROOT}/usr") \
 		${myconf} \
-		--with-apr="${EPREFIX}/usr/bin/apr-1-config" \
-		--with-apr-util="${EPREFIX}/usr/bin/apu-1-config" \
 		--disable-experimental-libtool \
 		--without-jikes \
 		--enable-local-library-preloading \
 		--disable-mod-activation \
 		--disable-neon-version-check \
-		--disable-static \
-		--with-sqlite="${EPREFIX}/usr"
+		--disable-static
 }
 
 src_compile() {

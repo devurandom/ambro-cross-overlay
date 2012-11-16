@@ -126,7 +126,7 @@ Now we install the rest of the system.
 cross-emerge-ng -av1uN @system
 }}}
 
-NOTE: if sys-apps/acl fails, just run the emerge again and it should work. This is due to a circular dependency that isn't being reported for some reason. The second emerge will probably work because different installation order will be chosen where everything compiles.
+NOTE: if sys-apps/acl fails, just run the emerge again and it should work. This is due to a circular dependency that isn't being reported for some reason. The second emerge will probably work because a different installation order will be chosen where everything compiles.
 
 Once everything is installed, the only thing left is to regenerate the linker cache. This is needed because emerge doesn't do it automatically when cross compiling, for some unknown reason. If you forget to do this, programs will fail to start, complaining of missing libraries.
 

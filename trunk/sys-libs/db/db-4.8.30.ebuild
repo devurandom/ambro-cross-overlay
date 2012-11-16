@@ -151,6 +151,9 @@ src_install() {
 		java-pkg_dojar "${D}"/usr/"$(get_libdir)"/*.jar
 		rm -f "${D}"/usr/"$(get_libdir)"/*.jar
 	fi
+
+	# Remove .la files which break cross-compilation against this package.
+	rm -f "${D}"/usr/"$(get_libdir)"/*.la
 }
 
 pkg_postinst() {

@@ -9,7 +9,7 @@ cd /usr/local
 svn checkout https://ambro-cross-overlay.googlecode.com/svn/trunk/ ambro-cross-overlay
 }}}
 
-Then register it in /etc/make.conf:
+Then register it in /etc/portage/make.conf (or /etc/make.conf, whatever you have):
 
 {{{
 PORTDIR_OVERLAY="
@@ -44,7 +44,7 @@ If you haven't done so yet, create an overlay for crossdev to put toolchain pack
 mkdir /usr/local/portage-crossdev
 }}}
 
-Then add it to /etc/make.conf:
+Then add it to your make.conf:
 
 {{{
 PORTDIR_OVERLAY="
@@ -80,7 +80,7 @@ mkdir -p ${SYSROOT}/etc/portage
 ln -s /usr/portage/profiles/default/linux/arm/10.0 ${SYSROOT}/etc/make.profile
 }}}
 
-Create ${SYSROOT}/etc/make.conf. Make sure to adjust the overlay path.
+Create ${SYSROOT}/etc/portage/make.conf. Make sure to adjust the overlay path.
 {{{
 ACCEPT_KEYWORDS="arm"
 ARCH="arm"

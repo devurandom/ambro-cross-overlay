@@ -99,10 +99,11 @@ FEATURES="buildpkg"
 PKGDIR="/usr/local/arm-pkg"
 }}}
 
-Copy package.keywords and package.mask:
+Link package.keywords and package.mask:
 {{{
-cp /usr/local/ambro-cross-overlay/Documentation/package.keywords ${SYSROOT}/etc/portage/
-cp /usr/local/ambro-cross-overlay/Documentation/package.mask ${SYSROOT}/etc/portage/
+mkdir -p ${SYSROOT}/etc/portage/package.{keywords,mask}
+ln -s /usr/local/ambro-cross-overlay/Documentation/package.keywords ${SYSROOT}/etc/portage/package.keywords/ambro-cross
+ln -s /usr/local/ambro-cross-overlay/Documentation/package.mask ${SYSROOT}/etc/portage/package.mask/ambro-cross
 }}}
 
 = Bootstrap the system =

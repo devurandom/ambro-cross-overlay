@@ -12,7 +12,6 @@ dev-libs/elfutils
 # other stuff in overlay
 dev-libs/libgpg-error
 dev-libs/libgcrypt
-dev-libs/nss
 dev-libs/nspr
 
 # need new portage for HDEPEND support

@@ -1,16 +1,16 @@
-diff -urN crossdev-20120721.old/wrappers/Makefile crossdev-20120721/wrappers/Makefile
---- crossdev-20120721.old/wrappers/Makefile	2012-09-17 00:01:41.392848826 +0200
-+++ crossdev-20120721/wrappers/Makefile	2012-09-17 00:14:15.859737678 +0200
+diff -urN crossdev-20120913.orig/wrappers/Makefile crossdev-20120913/wrappers/Makefile
+--- crossdev-20120913.orig/wrappers/Makefile	2012-12-06 21:17:55.812494562 +0000
++++ crossdev-20120913/wrappers/Makefile	2012-12-06 21:23:45.007740141 +0000
 @@ -4,7 +4,7 @@
  include ../settings.mk
  
  PORTDIR ?= $(shell portageq envvar PORTDIR)
 -FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper
-+FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper cross-emerge-ng toolchain-wrapper
++FNAMES = cross-emerge  cross-fix-root  cross-pkg-config  emerge-wrapper  cross-emerge-ng
  SITE = $(PREFIX)/share/crossdev/include/site
  TOPDIR =
  
-@@ -16,8 +16,12 @@
+@@ -16,8 +16,11 @@
  	cp -a etc $(DESTDIR)/$(PREFIX)/share/crossdev/
  	cp -a site $(DESTDIR)/$(PREFIX)/share/crossdev/include/
  	sed -i -e s@__PREFIX__@$(PREFIX)@g $(DESTDIR)/$(PREFIX)/bin/emerge-wrapper
@@ -18,8 +18,7 @@ diff -urN crossdev-20120721.old/wrappers/Makefile crossdev-20120721/wrappers/Mak
  	sed -i -e s@__TOPDIR__@$(SITE)@g $(DESTDIR)/$(SITE)/config.site
  	mv $(DESTDIR)/$(SITE)/config.site $(DESTDIR)/$(PREFIX)/share/
  	ln -sf $(PORTDIR)/profiles/embedded $(DESTDIR)/$(PREFIX)/share/crossdev/etc/make.profile
-+	
-+	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/chost-gcc
-+	ln -s toolchain-wrapper $(DESTDIR)/$(PREFIX)/bin/chost-g++
++	$(INSTALL_DIR) $(DESTDIR)/$(PREFIX)/share/crossdev/wrappers
++	cp toolchain-wrapper $(DESTDIR)/$(PREFIX)/share/crossdev/wrappers/
  
  .PHONY: all install

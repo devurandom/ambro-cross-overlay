@@ -1,9 +1,4 @@
-#!/bin/bash
-
-if [[ -z ${CROSS_CHOST} || -z ${SYSROOT} ]]; then
-	echo "ERROR: You have to set CROSS_CHOST and SYSROOT to use cross compiler wrappers!"
-	echo "You should use cross-emerge-ng which sets this."
-	exit 1
-fi
-
-exec "${CROSS_CHOST}-${0##*-}" --sysroot "${SYSROOT}" "$@"
+#!/bin/sh
+CROSSDEV_PROGRAM=<<PROGRAM>>
+CROSSDEV_SYSROOT=<<SYSROOT>>
+exec "${CROSSDEV_PROGRAM}" --sysroot "${CROSSDEV_SYSROOT}" "$@"

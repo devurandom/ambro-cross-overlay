@@ -147,8 +147,14 @@ groupadd -g 22 sshd
 useradd -g 22 -u 22 -d /var/empty -s /sbin/nologin sshd
 }}}
 
+----
+
 Udevd may not be started automatically. To fix it, just add the udev service to the boot runlevel:
 
 {{{
 rc-update add udev boot
 }}}
+
+----
+
+Packages using Python 3.2 cannot be build on the target machine (i.e. in the native / non-cross-compiler environment), because Python saves the CC used to build it in `${ROOT}/usr/lib/python3.2/config-3.2/Makefile`. It will point to `${ROOT}/etc/crossdev/gcc`, which obviously does not exist / work properly on the target machine.

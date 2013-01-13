@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-fs/e2fsprogs/e2fsprogs-1.42.ebuild,v 1.12 2012/05/04 19:09:17 jdhore Exp $
 
-EAPI=3
+EAPI=5-hdepend
 
 case ${PV} in
 *_pre*) UP_PV="${PV%_pre*}-WIP-${PV#*_pre}" ;;
@@ -23,8 +23,8 @@ IUSE="nls static-libs elibc_FreeBSD"
 RDEPEND="~sys-libs/${PN}-libs-${PV}
 	>=sys-apps/util-linux-2.16
 	nls? ( virtual/libintl )"
-DEPEND="${RDEPEND}
-	nls? ( sys-devel/gettext )
+DEPEND="${RDEPEND}"
+HDEPEND="nls? ( sys-devel/gettext )
 	virtual/pkgconfig
 	sys-apps/texinfo"
 

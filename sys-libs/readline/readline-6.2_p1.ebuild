@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-libs/readline/readline-6.2_p1.ebuild,v 1.10 2012/03/28 21:07:52 vapier Exp $
 
+EAPI=5-hdepend
+
 inherit eutils multilib toolchain-funcs flag-o-matic
 
 # Official patches

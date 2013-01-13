@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-devel/gettext/gettext-0.18.1.1-r3.ebuild,v 1.12 2012/09/23 19:05:55 armin76 Exp $
 
-EAPI="2"
+EAPI="5-hdepend"
 
 inherit flag-o-matic eutils multilib toolchain-funcs mono libtool java-pkg-opt-2
 

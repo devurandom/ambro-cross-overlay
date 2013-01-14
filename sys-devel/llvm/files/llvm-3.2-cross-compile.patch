@@ -1,0 +1,68 @@
+diff -urN llvm-3.2.src/autoconf/configure.ac llvm-3.2.src.new/autoconf/configure.ac
+--- llvm-3.2.src/autoconf/configure.ac	2013-01-14 17:26:35.245350300 +0100
++++ llvm-3.2.src.new/autoconf/configure.ac	2013-01-14 17:28:59.104356719 +0100
+@@ -1316,20 +1316,15 @@
+ AC_DEFINE_UNQUOTED([LLVM_USE_INTEL_JITEVENTS],$USE_INTEL_JITEVENTS,
+                    [Define if we have the Intel JIT API runtime support library])
+ 
+-dnl Check for libxml2
+-dnl Right now we're just checking for the existence, we could also check for a
+-dnl particular version via --version on xml2-config
+-AC_CHECK_PROGS(XML2CONFIG, xml2-config)
++dnl Check for pkg-config, needed for libxml2
++PKG_PROG_PKG_CONFIG
+ 
+-AC_MSG_CHECKING(for libxml2 includes)
+-if test "x$XML2CONFIG" = "x"; then
+- AC_MSG_RESULT(xml2-config not found)
+-else
+- LIBXML2_INC=`$XML2CONFIG --cflags`
+- AC_MSG_RESULT($LIBXML2_INC)
+- AC_CHECK_LIB(xml2, xmlReadFile,[AC_DEFINE([CLANG_HAVE_LIBXML],1,[Define if we have libxml2])
+-                                LIBXML2_LIBS="-lxml2"])
+-fi
++dnl Check for libxml2 via pkg-config
++PKG_CHECK_MODULES(LIBXML2_PC, libxml-2.0, [
++  LIBXML2_INC=$LIBXML2_PC_CFLAGS
++  LIBXML2_LIBS=$LIBXML2_PC_LIBS
++  AC_DEFINE([CLANG_HAVE_LIBXML],1,[Define if we have libxml2])
++])
+ AC_SUBST(LIBXML2_LIBS)
+ AC_SUBST(LIBXML2_INC)
+ 
+diff -urN llvm-3.2.src/autoconf/m4/build_exeext.m4 llvm-3.2.src.new/autoconf/m4/build_exeext.m4
+--- llvm-3.2.src/autoconf/m4/build_exeext.m4	2013-01-14 17:26:35.245350300 +0100
++++ llvm-3.2.src.new/autoconf/m4/build_exeext.m4	2013-01-14 17:27:02.889351534 +0100
+@@ -18,7 +18,7 @@
+      fi
+   fi
+   test -z "$BUILD_CC" && AC_MSG_ERROR([no acceptable cc found in \$PATH])
+-  ac_build_link='${BUILD_CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&AS_MESSAGE_LOG_FD'
++  ac_build_link='${BUILD_CC-cc} -o conftest $BUILD_CFLAGS $BUILD_CPPFLAGS $BUILD_LDFLAGS conftest.$ac_ext $BUILD_LIBS 1>&AS_MESSAGE_LOG_FD'
+   rm -f conftest*
+   echo 'int main () { return 0; }' > conftest.$ac_ext
+   ac_cv_build_exeext=
+diff -urN llvm-3.2.src/Makefile llvm-3.2.src.new/Makefile
+--- llvm-3.2.src/Makefile	2013-01-14 17:26:35.459350310 +0100
++++ llvm-3.2.src.new/Makefile	2013-01-14 17:27:02.890351534 +0100
+@@ -110,6 +110,8 @@
+ 	$(Verb) if [ ! -f BuildTools/Makefile ]; then \
+           $(MKDIR) BuildTools; \
+ 	  cd BuildTools ; \
++	  unset CC ; \
++	  unset CXX ; \
+ 	  unset CFLAGS ; \
+ 	  unset CXXFLAGS ; \
+ 	  unset SDKROOT ; \
+diff -urN llvm-3.2.src/projects/sample/autoconf/m4/build_exeext.m4 llvm-3.2.src.new/projects/sample/autoconf/m4/build_exeext.m4
+--- llvm-3.2.src/projects/sample/autoconf/m4/build_exeext.m4	2013-01-14 17:26:35.197350298 +0100
++++ llvm-3.2.src.new/projects/sample/autoconf/m4/build_exeext.m4	2013-01-14 17:27:02.890351534 +0100
+@@ -18,7 +18,7 @@
+      fi
+   fi
+   test -z "$BUILD_CC" && AC_MSG_ERROR([no acceptable cc found in \$PATH])
+-  ac_build_link='${BUILD_CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&AS_MESSAGE_LOG_FD'
++  ac_build_link='${BUILD_CC-cc} -o conftest $BUILD_CFLAGS $BUILD_CPPFLAGS $BUILD_LDFLAGS conftest.$ac_ext $BUILD_LIBS 1>&AS_MESSAGE_LOG_FD'
+   rm -f conftest*
+   echo 'int main () { return 0; }' > conftest.$ac_ext
+   ac_cv_build_exeext=

@@ -1,1 +1,2 @@
 net-fs/samba -cups
+sys-devel/llvm minimal

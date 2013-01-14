@@ -159,3 +159,22 @@ rc-update add udev boot
 ----
 
 Packages using Python 3.2 cannot be build on the target machine (i.e. in the native / non-cross-compiler environment), because Python saves the CC used to build it in `${ROOT}/usr/lib/python3.2/config-3.2/Makefile`. It will point to `${ROOT}/etc/crossdev/gcc`, which obviously does not exist / work properly on the target machine.
+
+= Supported packages =
+
+Other than packages which are pulled in by @system, the following packages are tested regularly:
+
+{{{
+app-admin/syslog-ng
+app-misc/tmux
+dev-util/strace
+dev-vcs/subversion
+net-fs/samba
+net-misc/badvpn
+net-misc/ntp
+net-p2p/rtorrent
+sys-block/parted
+sys-devel/gdb
+sys-fs/mtd-utils
+sys-process/schedtool
+}}}

@@ -7,8 +7,9 @@ SUPPORT_PYTHON_ABIS="1"
 RESTRICT_PYTHON_ABIS="3.* *-jython *-pypy-*"
 WANT_AUTOMAKE="none"
 MY_P="${P/_/-}"
+GENTOO_DEPEND_ON_PERL=no
 
-inherit autotools bash-completion-r1 db-use depend.apache elisp-common flag-o-matic java-pkg-opt-2 libtool multilib perl-module python eutils
+inherit autotools bash-completion-r1 db-use depend.apache elisp-common flag-o-matic java-pkg-opt-2 libtool multilib perl-module python eutils toolchain-funcs
 
 DESCRIPTION="Advanced version control system"
 HOMEPAGE="http://subversion.apache.org/"
@@ -55,9 +56,7 @@ want_apache
 
 pkg_setup() {
 	if use berkdb; then
-		local apu_bdb_version="$(${EPREFIX}/usr/bin/apu-1-config --includes \
-			| grep -Eoe '-I${EPREFIX}/usr/include/db[[:digit:]]\.[[:digit:]]' \
-			| sed 's:.*b::')"
+		local apu_bdb_version="$( $(tc-getPKG_CONFIG) apr-util-1 --variable=db_full_version )"
 		einfo
 		if [[ -z "${SVN_BDB_VERSION}" ]]; then
 			if [[ -n "${apu_bdb_version}" ]]; then
@@ -110,6 +109,11 @@ src_prepare() {
 		"${FILESDIR}"/${PN}-1.6.3-hpux-dso.patch \
 		"${FILESDIR}"/${PN}-fix-parallel-build-support-for-perl-bindings.patch \
 		"${FILESDIR}"/${PN}-1.7.6-kwallet.patch
+
+	if tc-is-cross-compiler; then
+		epatch "${FILESDIR}"/subversion-1.7.7-pkg-config.patch
+		epatch "${FILESDIR}"/subversion-1.7.7-ld-preload.patch
+	fi
 
 	fperms +x build/transform_libtool_scripts.sh
 
@@ -181,8 +185,8 @@ src_configure() {
 	ac_cv_path_RUBY="${EPREFIX}"/usr/bin/ruby18 ac_cv_path_RDOC="${EPREFIX}"/usr/bin/rdoc18 \
 	econf --libdir="${EPREFIX}/usr/$(get_libdir)" \
 		$(use_with apache2 apxs "${APXS}") \
-		$(use_with berkdb berkeley-db "db.h:${EPREFIX}/usr/include/db${SVN_BDB_VERSION}::db-${SVN_BDB_VERSION}") \
-		$(use_with ctypes-python ctypesgen "${EPREFIX}/usr") \
+		$(use_with berkdb berkeley-db "db.h:${EROOT}/usr/include/db${SVN_BDB_VERSION}::db-${SVN_BDB_VERSION}") \
+		$(use_with ctypes-python ctypesgen "${EROOT}/usr") \
 		$(use_enable dso runtime-module-search) \
 		$(use_with gnome-keyring) \
 		$(use_enable java javahl) \
@@ -190,10 +194,8 @@ src_configure() {
 		$(use_with kde kwallet) \
 		$(use_with sasl) \
 		$(use_with webdav-neon neon) \
-		$(use_with webdav-serf serf "${EPREFIX}/usr") \
+		$(use_with webdav-serf serf "${EROOT}/usr") \
 		${myconf} \
-		--with-apr="${EPREFIX}/usr/bin/apr-1-config" \
-		--with-apr-util="${EPREFIX}/usr/bin/apu-1-config" \
 		--disable-experimental-libtool \
 		--without-jikes \
 		--disable-mod-activation \

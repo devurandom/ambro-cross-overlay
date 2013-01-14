@@ -6,8 +6,9 @@ EAPI=5
 
 RESTRICT_PYTHON_ABIS="3.*"
 SUPPORT_PYTHON_ABIS="1"
+PYTHON_DEPEND="python? 2"
 
-inherit eutils multilib python
+inherit autotools eutils multilib python python-convert
 
 DESCRIPTION="C language family frontend for LLVM"
 HOMEPAGE="http://clang.llvm.org/"
@@ -19,12 +20,18 @@ SRC_URI="http://llvm.org/releases/${PV}/llvm-${PV}.src.tar.gz
 LICENSE="UoI-NCSA"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos"
-IUSE="debug kernel_FreeBSD multitarget +static-analyzer test"
+IUSE="debug kernel_FreeBSD multitarget +python +static-analyzer test"
+REQUIRED_USE="static-analyzer? ( python )"
 
-DEPEND="static-analyzer? ( dev-lang/perl )"
+DEPEND="static-analyzer? ( dev-lang/perl )
+	test? ( || ( dev-lang/python:2.5 dev-lang/python:2.6 dev-lang/python:2.7 ) )"
 RDEPEND="~sys-devel/llvm-${PV}[debug=,multitarget=]"
 
 S=${WORKDIR}/llvm-${PV}.src
+
+pkg_setup() {
+	use python && python_pkg_setup
+}
 
 src_prepare() {
 	rm -f "${S}"/tools/clang "${S}"/projects/compiler-rt \
@@ -36,6 +43,9 @@ src_prepare() {
 
 	# Same as llvm doc patches
 	epatch "${FILESDIR}"/${PN}-2.7-fixdoc.patch
+
+	# Same as llvm cross compile patch.
+	epatch "${FILESDIR}"/llvm-3.2-cross-compile.patch
 
 	# multilib-strict
 	sed -e "/PROJ_headers/s#lib/clang#$(get_libdir)/clang#" \
@@ -56,9 +66,11 @@ src_prepare() {
 		-i  tools/clang/lib/Driver/Tools.cpp \
 		|| die "gold plugin path sed failed"
 	# Specify python version
-	python_convert_shebangs 2 tools/clang/tools/scan-view/scan-view
-	python_convert_shebangs -r 2 test/Scripts
-	python_convert_shebangs 2 projects/compiler-rt/lib/asan/scripts/asan_symbolize.py
+	use test && python-convert_convert_shebangs -r /usr/bin/python2 test/Scripts
+	if use python; then
+		python_convert_shebangs 2 projects/compiler-rt/lib/asan/scripts/asan_symbolize.py
+		python_convert_shebangs 2 tools/clang/tools/scan-view/scan-view
+	fi
 
 	# From llvm src_prepare
 	einfo "Fixing install dirs"
@@ -88,6 +100,25 @@ src_prepare() {
 
 	# User patches
 	epatch_user
+
+	# Regenerate autotools, from llvm ebuild.
+
+        # Regenerate autotools (from autoconf/AutoRegen.sh).
+        pushd autoconf >/dev/null || die
+        local outfile=configure
+        local configfile=configure.ac
+        local cwd=`pwd`
+        eaclocal --force -I "${cwd}/m4" || die "aclocal failed"
+        eautoconf --force --warnings=all -o "../${outfile}" "${configfile}" || die "autoconf failed"
+        popd >/dev/null || die
+        autotools_run_tool autoheader --warnings=all -I autoconf -I autoconf/m4 "autoconf/${configfile}" || die "autoheader failed"
+
+        # Regenerate autotools in sample (from projects/sample/autoconf/AutoRegen.sh).
+        pushd projects/sample/autoconf >/dev/null || die
+        local cwd=`pwd`
+        eaclocal -I "${cwd}/m4" || die "aclocal failed"
+        eautoconf --warnings=all -o ../configure configure.ac || die "autoconf failed"
+        popd >/dev/null || di
 }
 
 src_configure() {
@@ -113,17 +144,21 @@ src_configure() {
 		CONF_FLAGS="${CONF_FLAGS} --enable-pic"
 	fi
 
+	mkdir build || die
+	cd build || die
+
 	# clang prefers clang over gcc, so we may need to force that
 	tc-export CC CXX
-	econf ${CONF_FLAGS}
+	ECONF_SOURCE="${S}" econf ${CONF_FLAGS}
 }
 
 src_compile() {
+	cd "${S}/build" || die
 	emake VERBOSE=1 KEEP_SYMBOLS=1 REQUIRES_RTTI=1 clang-only
 }
 
 src_test() {
-	cd "${S}"/tools/clang || die "cd clang failed"
+	cd "${S}"/build/tools/clang || die "cd clang failed"
 
 	echo ">>> Test phase [test]: ${CATEGORY}/${PF}"
 
@@ -133,12 +168,18 @@ src_test() {
 			has test $FEATURES || eerror "Make test failed. See above for details."
 		fi
 	}
-	python_execute_function testing
+
+	if use python; then
+		python_execute_function testing
+	else
+		testing
+	fi
 }
 
 src_install() {
-	cd "${S}"/tools/clang || die "cd clang failed"
+	pushd "${S}"/build/tools/clang >/dev/null || die
 	emake KEEP_SYMBOLS=1 DESTDIR="${D}" install
+	popd >/dev/null || die
 
 	if use static-analyzer ; then
 		dobin tools/scan-build/ccc-analyzer
@@ -160,7 +201,9 @@ src_install() {
 	fi
 
 	# AddressSanitizer symbolizer (currently separate)
-	dobin "${S}"/projects/compiler-rt/lib/asan/scripts/asan_symbolize.py
+	if use python; then
+		dobin "${S}"/projects/compiler-rt/lib/asan/scripts/asan_symbolize.py
+	fi
 
 	# Fix install_names on Darwin.  The build system is too complicated
 	# to just fix this, so we correct it post-install
@@ -190,9 +233,9 @@ src_install() {
 }
 
 pkg_postinst() {
-	python_mod_optimize clang
+	use python && python_mod_optimize clang
 }
 
 pkg_postrm() {
-	python_mod_cleanup clang
+	use python && python_mod_cleanup clang
 }

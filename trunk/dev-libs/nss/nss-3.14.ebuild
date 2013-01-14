@@ -26,7 +26,7 @@ RDEPEND=">=dev-libs/nspr-${NSPR_VER}
 DEPEND="${RDEPEND}"
 
 HDEPEND="virtual/pkgconfig
-	 targetroot? ( ~${CATEGORY}/${P}[utils] )"
+	 targetroot? ( ${CATEGORY}/${PN}[utils] )"
 
 src_setup() {
 	export LC_ALL="C"

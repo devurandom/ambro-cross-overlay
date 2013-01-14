@@ -3,8 +3,8 @@
 # $Header: /var/cvsroot/gentoo-x86/sys-devel/llvm/llvm-3.2.ebuild,v 1.3 2013/01/07 20:22:12 voyageur Exp $
 
 EAPI=5
-PYTHON_DEPEND="2"
-inherit eutils flag-o-matic multilib toolchain-funcs python pax-utils
+
+inherit autotools eutils flag-o-matic multilib toolchain-funcs pax-utils python-convert
 
 DESCRIPTION="Low Level Virtual Machine"
 HOMEPAGE="http://llvm.org/"
@@ -13,9 +13,10 @@ SRC_URI="http://llvm.org/releases/${PV}/${P}.src.tar.gz"
 LICENSE="UoI-NCSA"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~ppc ~x86 ~amd64-fbsd ~x86-fbsd ~x64-freebsd ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos"
-IUSE="debug doc gold +libffi multitarget ocaml test udis86 vim-syntax"
+IUSE="debug doc gold +libffi minimal multitarget ocaml test udis86 vim-syntax"
 
 DEPEND="dev-lang/perl
+	|| ( dev-lang/python:2.5 dev-lang/python:2.6 dev-lang/python:2.7 )
 	dev-python/sphinx
 	>=sys-devel/make-3.79
 	>=sys-devel/flex-2.5.4
@@ -27,17 +28,13 @@ DEPEND="dev-lang/perl
 		virtual/libffi )
 	ocaml? ( dev-lang/ocaml )
 	udis86? ( dev-libs/udis86[pic(+)] )"
-RDEPEND="dev-lang/perl
+RDEPEND="!minimal? ( dev-lang/perl )
 	libffi? ( virtual/libffi )
 	vim-syntax? ( || ( app-editors/vim app-editors/gvim ) )"
 
 S=${WORKDIR}/${P}.src
 
 pkg_setup() {
-	# Required for test and build
-	python_set_active_version 2
-	python_pkg_setup
-
 	# need to check if the active compiler is ok
 
 	broken_gcc=" 3.2.2 3.2.3 3.3.2 4.1.1 "
@@ -96,13 +93,31 @@ src_prepare() {
 		|| die "FileCheck Makefile sed failed"
 
 	# Specify python version
-	python_convert_shebangs -r 2 test/Scripts
+	python-convert_convert_shebangs -r /usr/bin/python2 test/Scripts
 
 	epatch "${FILESDIR}"/${PN}-3.2-nodoctargz.patch
 	epatch "${FILESDIR}"/${PN}-3.0-PPC_macro.patch
+	epatch "${FILESDIR}"/llvm-3.2-cross-compile.patch
 
 	# User patches
 	epatch_user
+
+	# Regenerate autotools (from autoconf/AutoRegen.sh).
+	pushd autoconf >/dev/null || die
+	local outfile=configure
+	local configfile=configure.ac
+	local cwd=`pwd`
+	eaclocal --force -I "${cwd}/m4" || die "aclocal failed"
+	eautoconf --force --warnings=all -o "../${outfile}" "${configfile}" || die "autoconf failed"
+	popd >/dev/null || die
+	autotools_run_tool autoheader --warnings=all -I autoconf -I autoconf/m4 "autoconf/${configfile}" || die "autoheader failed"
+
+	# Regenerate autotools in sample (from projects/sample/autoconf/AutoRegen.sh).
+	pushd projects/sample/autoconf >/dev/null || die
+	local cwd=`pwd`
+	eaclocal -I "${cwd}/m4" || die "aclocal failed"
+	eautoconf --warnings=all -o ../configure configure.ac || die "autoconf failed"
+	popd >/dev/null || die
 }
 
 src_configure() {
@@ -140,27 +155,34 @@ src_configure() {
 	fi
 	CONF_FLAGS="${CONF_FLAGS} $(use_enable libffi)"
 
+	mkdir build || die
+	cd build || die
+
 	# llvm prefers clang over gcc, so we may need to force that
 	tc-export CC CXX
-	econf ${CONF_FLAGS}
+	ECONF_SOURCE="${S}" econf ${CONF_FLAGS}
 }
 
 src_compile() {
+	pushd build >/dev/null || die
 	emake VERBOSE=1 KEEP_SYMBOLS=1 REQUIRES_RTTI=1
+	popd >/dev/null || die
 
 	emake -C docs -f Makefile.sphinx man
 	use doc && emake -C docs -f Makefile.sphinx html
 
-	pax-mark m Release/bin/lli
+	pax-mark m build/Release/bin/lli
 	if use test; then
-		pax-mark m unittests/ExecutionEngine/JIT/Release/JITTests
-		pax-mark m unittests/ExecutionEngine/MCJIT/Release/MCJITTests
-		pax-mark m unittests/Support/Release/SupportTests
+		pax-mark m build/unittests/ExecutionEngine/JIT/Release/JITTests
+		pax-mark m build/unittests/ExecutionEngine/MCJIT/Release/MCJITTests
+		pax-mark m build/unittests/Support/Release/SupportTests
 	fi
 }
 
 src_install() {
+	pushd build >/dev/null || die
 	emake KEEP_SYMBOLS=1 DESTDIR="${D}" install
+	popd >/dev/null || die
 
 	doman docs/_build/man/*.1
 	use doc && dohtml -r docs/_build/html/

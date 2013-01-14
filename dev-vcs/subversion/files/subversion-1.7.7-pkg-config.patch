@@ -1,0 +1,514 @@
+diff -urN subversion-1.7.7.orig/build/ac-macros/apr.m4 subversion-1.7.7/build/ac-macros/apr.m4
+--- subversion-1.7.7.orig/build/ac-macros/apr.m4	2013-01-14 02:06:12.293897928 +0100
++++ subversion-1.7.7/build/ac-macros/apr.m4	2013-01-14 02:20:11.363935367 +0100
+@@ -32,26 +32,25 @@
+ 
+   AC_MSG_NOTICE([Apache Portable Runtime (APR) library configuration])
+ 
+-  APR_FIND_APR("$abs_srcdir/apr", "$abs_builddir/apr", 1, [1 0])
++  apr_found="no"
++  if test -n "$PKG_CONFIG"; then
++    apr_pkg="apr-1"
++    AC_MSG_CHECKING([apr (via pkg-config)])
++    apr_version=`$PKG_CONFIG $apr_pkg --modversion --silence-errors`
++
++    if test -n "$apr_version"; then
++      AC_MSG_RESULT([$apr_version])
++      apr_found="yes"
++    fi
++  fi
+ 
+   if test $apr_found = "no"; then
+     AC_MSG_WARN([APR not found])
+     SVN_DOWNLOAD_APR
+   fi
+ 
+-  if test $apr_found = "reconfig"; then
+-    SVN_EXTERNAL_PROJECT([apr])
+-  fi
+-
+   dnl check APR version number against regex  
+ 
+-  AC_MSG_CHECKING([APR version])    
+-  apr_version="`$apr_config --version`"
+-  if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --version failed])
+-  fi
+-  AC_MSG_RESULT([$apr_version])
+-
+   APR_WANTED_REGEX_MATCH=0
+   for apr_wanted_regex in $APR_WANTED_REGEXES; do
+     if test `expr $apr_version : $apr_wanted_regex` -ne 0; then
+@@ -67,48 +66,33 @@
+ 
+   dnl Get build information from APR
+ 
+-  CPPFLAGS="$CPPFLAGS `$apr_config --cppflags`"
+-  if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --cppflags failed])
+-  fi
+-
+-  CFLAGS="$CFLAGS `$apr_config --cflags`"
+-  if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --cflags failed])
+-  fi
+-
+-  apr_ldflags="`$apr_config --ldflags`"
+-  if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --ldflags failed])
+-  fi
+-  LDFLAGS="$LDFLAGS `SVN_REMOVE_STANDARD_LIB_DIRS($apr_ldflags)`"
+-
+-  SVN_APR_INCLUDES="`$apr_config --includes`"
++  SVN_APR_PREFIX=`$PKG_CONFIG $apr_pkg --variable=prefix --silence-errors`
+   if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --includes failed])
++    AC_MSG_ERROR([pkg-config --variable=prefix failed])
+   fi
+ 
+-  SVN_APR_PREFIX="`$apr_config --prefix`"
++  SVN_APR_INCLUDES=`$PKG_CONFIG $apr_pkg --cflags --silence-errors`
+   if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --prefix failed])
++    AC_MSG_ERROR([pkg-config --cflags failed])
+   fi
++  CFLAGS="$CFLAGS $SVN_APR_INCLUDES"
+ 
+   if test "$enable_all_static" = "yes"; then
+-    SVN_APR_LIBS="`$apr_config --link-ld --libs`"
++    SVN_APR_LIBS=`$PKG_CONFIG $apr_pkg --libs --static --silence-errors`
+     if test $? -ne 0; then
+-      AC_MSG_ERROR([apr-config --link-ld --libs failed])
++        AC_MSG_ERROR([pkg-config --libs --static failed])
+     fi
+   else
+-    SVN_APR_LIBS="`$apr_config --link-ld`"
++    SVN_APR_LIBS=`$PKG_CONFIG $apr_pkg --libs --silence-errors`
+     if test $? -ne 0; then
+-      AC_MSG_ERROR([apr-config --link-ld failed])
++        AC_MSG_ERROR([pkg-config --libs failed])
+     fi
+   fi
+-  SVN_APR_LIBS="`SVN_REMOVE_STANDARD_LIB_DIRS($SVN_APR_LIBS)`"
++  LDFLAGS="$LDFLAGS $SVN_APR_LIBS"
+ 
+-  SVN_APR_SHLIB_PATH_VAR="`$apr_config --shlib-path-var`"
++  SVN_APR_SHLIB_PATH_VAR=`$PKG_CONFIG $apr_pkg --variable=shlib_path_var --silence-errors`
+   if test $? -ne 0; then
+-    AC_MSG_ERROR([apr-config --shlib-path-var failed])
++    AC_MSG_ERROR([pkg-config --variable=shlib_path_var failed])
+   fi
+ 
+   AC_SUBST(SVN_APR_PREFIX)
+diff -urN subversion-1.7.7.orig/build/ac-macros/aprutil.m4 subversion-1.7.7/build/ac-macros/aprutil.m4
+--- subversion-1.7.7.orig/build/ac-macros/aprutil.m4	2013-01-14 02:06:12.293897928 +0100
++++ subversion-1.7.7/build/ac-macros/aprutil.m4	2013-01-14 02:29:07.328959282 +0100
+@@ -38,34 +38,25 @@
+ 
+   AC_MSG_NOTICE([Apache Portable Runtime Utility (APRUTIL) library configuration])
+ 
+-  APR_FIND_APU("$abs_srcdir/apr-util", "$abs_builddir/apr-util", 1, [1 0])
++  apu_found="no"
++  if test -n "$PKG_CONFIG"; then
++    apu_pkg="apr-util-1"
++    AC_MSG_CHECKING([apr-util (via pkg-config)])
++    apu_version=`$PKG_CONFIG $apu_pkg --modversion --silence-errors`
++
++    if test -n "$apu_version"; then
++      AC_MSG_RESULT([$apu_version])
++      apu_found="yes"
++    fi
++  fi
+ 
+   if test $apu_found = "no"; then
+     AC_MSG_WARN([APRUTIL not found])
+     SVN_DOWNLOAD_APRUTIL
+   fi
+ 
+-  if test $apu_found = "reconfig"; then
+-    SVN_EXTERNAL_PROJECT([apr-util], [--with-apr=../apr])
+-  fi
+-
+   dnl check APRUTIL version number against regex  
+ 
+-  AC_MSG_CHECKING([APR-UTIL version])    
+-  apu_version="`$apu_config --version`"
+-  if test $? -ne 0; then
+-    # This is a hack as suggested by Ben Collins-Sussman.  It can be
+-    # removed after apache 2.0.44 has been released.  (The apu-config
+-    # shipped in 2.0.43 contains a correct version number, but
+-    # stupidly doesn't understand the --version switch.)
+-    apu_version=`grep "APRUTIL_DOTTED_VERSION=" $(which $apu_config) | tr -d "APRUTIL_DOTTED_VERSION="| tr -d '"'`
+-    #AC_MSG_ERROR([
+-    #    apu-config --version failed.
+-    #    Your apu-config doesn't support the --version switch, please upgrade
+-    #    to APR-UTIL more recent than 2002-Nov-05.])
+-  fi
+-  AC_MSG_RESULT([$apu_version])
+-
+   APU_WANTED_REGEX_MATCH=0
+   for apu_wanted_regex in $APRUTIL_WANTED_REGEXES; do
+     if test `expr $apu_version : $apu_wanted_regex` -ne 0; then
+@@ -81,45 +72,34 @@
+ 
+   dnl Get libraries and thread flags from APRUTIL ---------------------
+ 
+-  apu_ldflags="`$apu_config --ldflags`"
+-  if test $? -ne 0; then
+-    AC_MSG_ERROR([apu-config --ldflags failed])
+-  fi
+-  LDFLAGS="$LDFLAGS `SVN_REMOVE_STANDARD_LIB_DIRS($apu_ldflags)`"
+-
+-  SVN_APRUTIL_INCLUDES="`$apu_config --includes`"
++  SVN_APRUTIL_INCLUDES=`$PKG_CONFIG $apu_pkg --cflags --silence-errors`
+   if test $? -ne 0; then
+-    AC_MSG_ERROR([apu-config --includes failed])
++    AC_MSG_ERROR([pkg-config --cflags failed])
+   fi
++  CFLAGS="$CFLAGS $SVN_APRUTIL_INCLUDES"
+ 
+-  SVN_APRUTIL_PREFIX="`$apu_config --prefix`"
++  SVN_APRUTIL_PREFIX=`$PKG_CONFIG $apu_pkg --variable=prefix --silence-errors`
+   if test $? -ne 0; then
+-    AC_MSG_ERROR([apu-config --prefix failed])
++    AC_MSG_ERROR([pkg-config --variable=prefix failed])
+   fi
+ 
+   if test "$enable_all_static" = "yes"; then
+-    SVN_APRUTIL_LIBS="`$apu_config --link-ld --libs`"
++    SVN_APRUTIL_LIBS=`$PKG_CONFIG $apu_pkg --libs --silence-errors`
+     if test $? -ne 0; then
+-      AC_MSG_ERROR([apu-config --link-ld --libs failed])
++      AC_MSG_ERROR([pkg-config --libs failed])
+     fi
+   else
+-    SVN_APRUTIL_LIBS="`$apu_config --link-ld`"
++    SVN_APRUTIL_LIBS=`$PKG_CONFIG $apu_pkg --libs --static --silence-errors`
+     if test $? -ne 0; then
+-      AC_MSG_ERROR([apu-config --link-ld failed])
++      AC_MSG_ERROR([pkg-config --libs --static failed])
+     fi
+   fi
+-  SVN_APRUTIL_LIBS="`SVN_REMOVE_STANDARD_LIB_DIRS($SVN_APRUTIL_LIBS)`"
++  LDFLAGS="$LDFLAGS $SVN_APRUTIL_LIBS"
+ 
+   AC_SUBST(SVN_APRUTIL_INCLUDES)
+   AC_SUBST(SVN_APRUTIL_CONFIG, ["$apu_config"])
+   AC_SUBST(SVN_APRUTIL_LIBS)
+   AC_SUBST(SVN_APRUTIL_PREFIX)
+-
+-  dnl What version of Expat are we using? -----------------
+-  SVN_HAVE_OLD_EXPAT="`$apu_config --old-expat`"
+-  if test "$SVN_HAVE_OLD_EXPAT" = "yes"; then
+-    AC_DEFINE(SVN_HAVE_OLD_EXPAT, 1, [Defined if Expat 1.0 or 1.1 was found])
+-  fi
+ ])
+ 
+ dnl SVN_DOWNLOAD_APRUTIL()
+diff -urN subversion-1.7.7.orig/build/ac-macros/berkeley-db.m4 subversion-1.7.7/build/ac-macros/berkeley-db.m4
+--- subversion-1.7.7.orig/build/ac-macros/berkeley-db.m4	2013-01-14 02:06:12.293897928 +0100
++++ subversion-1.7.7/build/ac-macros/berkeley-db.m4	2013-01-14 02:30:13.465962233 +0100
+@@ -57,7 +57,7 @@
+     if test "$withval" = "no"; then
+       status=skip
+     elif test "$withval" = "yes"; then
+-      apu_db_version="`$apu_config --db-version`"
++      apu_db_version="`$PKG_CONFIG $apu_pkg --variable=db_version --silence-errors`"
+       if test $? -ne 0; then
+         AC_MSG_ERROR([Can't determine whether apr-util is linked against a
+                       proper version of Berkeley DB.])
+@@ -109,7 +109,7 @@
+     # Check if APR-UTIL is providing the correct Berkeley DB version
+     # for us.
+     #
+-    apu_db_version="`$apu_config --db-version`"
++    apu_db_version="`$PKG_CONFIG $apu_pkg --variable=db_version --silence-errors`"
+     if test $? -ne 0; then
+       AC_MSG_WARN([Detected older version of APR-UTIL, trying to determine
+                    whether apr-util is linked against Berkeley DB
+@@ -180,10 +180,10 @@
+     # Or that it resides in a non-standard location which we would have
+     # to compensate with using something like -R`$apu_config --prefix`/lib.
+     #
+-    SVN_DB_LIBS=["${SVN_DB_LIBS-`$apu_config --libs | $SED -e 's/.*\(-ldb[^[:space:]]*\).*/\1/' | $EGREP -- '-ldb[^[:space:]]*'`}"]
++    SVN_DB_LIBS=["${SVN_DB_LIBS-`$PKG_CONFIG $apu_pkg --libs --silence-errors | $SED -e 's/.*\(-ldb[^[:space:]]*\).*/\1/' | $EGREP -- '-ldb[^[:space:]]*'`}"]
+ 
+     CPPFLAGS="$SVN_DB_INCLUDES $SVN_APRUTIL_INCLUDES $CPPFLAGS" 
+-    LIBS="`$apu_config --ldflags` $SVN_DB_LIBS $LIBS"
++    LIBS="`$PKG_CONFIG $apu_pkg --libs --silence-errors` $LIBS"
+ 
+     if test -n "$svn_berkeley_db_header"; then
+       SVN_DB_HEADER="#include <$svn_berkeley_db_header>"
+diff -urN subversion-1.7.7.orig/build/ac-macros/berkeley-db.m4.orig subversion-1.7.7/build/ac-macros/berkeley-db.m4.orig
+--- subversion-1.7.7.orig/build/ac-macros/berkeley-db.m4.orig	1970-01-01 01:00:00.000000000 +0100
++++ subversion-1.7.7/build/ac-macros/berkeley-db.m4.orig	2013-01-14 02:06:06.798897682 +0100
+@@ -0,0 +1,246 @@
++dnl ===================================================================
++dnl   Licensed to the Apache Software Foundation (ASF) under one
++dnl   or more contributor license agreements.  See the NOTICE file
++dnl   distributed with this work for additional information
++dnl   regarding copyright ownership.  The ASF licenses this file
++dnl   to you under the Apache License, Version 2.0 (the
++dnl   "License"); you may not use this file except in compliance
++dnl   with the License.  You may obtain a copy of the License at
++dnl
++dnl     http://www.apache.org/licenses/LICENSE-2.0
++dnl
++dnl   Unless required by applicable law or agreed to in writing,
++dnl   software distributed under the License is distributed on an
++dnl   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++dnl   KIND, either express or implied.  See the License for the
++dnl   specific language governing permissions and limitations
++dnl   under the License.
++dnl ===================================================================
++dnl
++dnl   SVN_LIB_BERKELEY_DB(major, minor, patch)
++dnl
++dnl   Compare if the Berkeley DB specified by user or provided by APR-UTIL
++dnl   is no older than the version given by MAJOR, MINOR, and PATCH.
++dnl
++dnl   If we find a useable version, set the shell variable
++dnl   `svn_lib_berkeley_db' to `yes'.  Otherwise, set `svn_lib_berkeley_db'
++dnl   to `no'.
++dnl
++dnl   This macro also checks for the `--with-berkeley-db=ARG' flag;
++dnl   if given, the macro will use the ARG specified, and the
++dnl   configuration script will die if it can't find the library.  If
++dnl   the user gives the `--without-berkeley-db' flag, the entire
++dnl   search is skipped.
++
++
++AC_DEFUN(SVN_LIB_BERKELEY_DB,
++[
++  db_version=$1.$2.$3
++  dnl  Process the `with-berkeley-db' switch.  We set `status' to one
++  dnl  of the following values:
++  dnl    `required' --- the user specified that they did want to use
++  dnl        Berkeley DB, so abort the configuration if we cannot find it.
++  dnl    `try-link' --- See if APR-UTIL supplies the correct DB version;
++  dnl        if it doesn't, just do not build the bdb based filesystem.
++  dnl    `skip' --- Do not look for Berkeley DB, and do not build the
++  dnl        bdb based filesystem.
++
++  AC_ARG_WITH(berkeley-db, [AS_HELP_STRING(
++                                           [[--with-berkeley-db[=HEADER:INCLUDES:LIB_SEARCH_DIRS:LIBS]]], [
++                          The Subversion Berkeley DB based filesystem library 
++                          requires Berkeley DB $db_version or newer.  If you
++                          specify `--without-berkeley-db', that library will
++                          not be built.  If you omit the argument of this option
++                          completely, the configure script will use Berkeley DB
++                          used by APR-UTIL.])],
++  [
++    if test "$withval" = "no"; then
++      status=skip
++    elif test "$withval" = "yes"; then
++      apu_db_version="`$apu_config --db-version`"
++      if test $? -ne 0; then
++        AC_MSG_ERROR([Can't determine whether apr-util is linked against a
++                      proper version of Berkeley DB.])
++      fi
++
++      if test "$withval" = "yes"; then
++        if test "$apu_db_version" -lt "4"; then
++          AC_MSG_ERROR([APR-UTIL was linked against Berkeley DB version $apu_db_version,
++                        while version 4 or higher is required.  Reinstall
++                        APR-UTIL with the appropriate options.])
++        fi
++
++        status=required
++
++      elif test "$apu_found" != "reconfig"; then
++        if test "$apu_db_version" -lt 4; then
++          AC_MSG_ERROR([APR-UTIL was installed independently, it won't be
++                        possible to use the specified Berkeley DB: $withval])
++        fi
++
++        status=required
++      fi
++    else
++      if echo "$withval" | $EGREP ":.*:.*:" > /dev/null; then
++        svn_berkeley_db_header=["`echo "$withval" | $SED -e "s/\([^:]*\):.*/\1/"`"]
++        SVN_DB_INCLUDES=""
++        for i in [`echo "$withval" | $SED -e "s/.*:\([^:]*\):[^:]*:.*/\1/"`]; do
++          SVN_DB_INCLUDES="$SVN_DB_INCLUDES -I$i"
++        done
++        SVN_DB_INCLUDES="${SVN_DB_INCLUDES## }"
++        for l in [`echo "$withval" | $SED -e "s/.*:[^:]*:\([^:]*\):.*/\1/"`]; do
++          LDFLAGS="$LDFLAGS -L$l"
++        done
++        SVN_DB_LIBS=""
++        for l in [`echo "$withval" | $SED -e "s/.*:\([^:]*\)/\1/"`]; do
++          SVN_DB_LIBS="$SVN_DB_LIBS -l$l"
++        done
++        SVN_DB_LIBS="${SVN_DB_LIBS## }"
++
++        status=required
++      else
++        AC_MSG_ERROR([Invalid syntax of argument of --with-berkeley-db option])
++      fi
++    fi
++  ],
++  [
++    # No --with-berkeley-db option:
++    #
++    # Check if APR-UTIL is providing the correct Berkeley DB version
++    # for us.
++    #
++    apu_db_version="`$apu_config --db-version`"
++    if test $? -ne 0; then
++      AC_MSG_WARN([Detected older version of APR-UTIL, trying to determine
++                   whether apr-util is linked against Berkeley DB
++                   $db_version])
++      status=try-link
++    elif test "$apu_db_version" -lt "4"; then
++      status=skip
++    else
++      status=try-link
++    fi
++  ])
++
++  if test "$status" = "skip"; then
++    svn_lib_berkeley_db=no
++  else
++    AC_MSG_CHECKING([for availability of Berkeley DB])
++    SVN_LIB_BERKELEY_DB_TRY($1, $2, $3)
++    if test "$svn_have_berkeley_db" = "yes"; then
++      AC_MSG_RESULT([yes])
++      svn_lib_berkeley_db=yes
++    else
++      AC_MSG_RESULT([no])
++      svn_lib_berkeley_db=no
++      if test "$status" = "required"; then
++        AC_MSG_ERROR([Berkeley DB $db_version or newer wasn't found.])
++      fi
++    fi
++  fi
++])
++
++
++dnl   SVN_LIB_BERKELEY_DB_TRY(major, minor, patch)
++dnl
++dnl   A subroutine of SVN_LIB_BERKELEY_DB.
++dnl
++dnl   Check that a new-enough version of Berkeley DB is installed.
++dnl   "New enough" means no older than the version given by MAJOR,
++dnl   MINOR, and PATCH.  The result of the test is not cached; no
++dnl   messages are printed.
++dnl
++dnl   Set the shell variable `svn_have_berkeley_db' to `yes' if we found
++dnl   an appropriate version, or `no' otherwise.
++dnl
++dnl   This macro uses the Berkeley DB library function `db_version' to
++dnl   find the version.  If the Berkeley DB library doesn't have this
++dnl   function, then this macro assumes it is too old.
++
++dnl NOTE: This is pretty messed up.  It seems that the FreeBSD port of
++dnl Berkeley DB 4 puts the header file in /usr/local/include/db4, but the
++dnl database library in /usr/local/lib, as libdb4.[a|so].  There is no
++dnl /usr/local/include/db.h.  So if you check for /usr/local first, you'll
++dnl get the old header file from /usr/include, and the new library from
++dnl /usr/local/lib.  Disaster.  Thus this test compares the version constants
++dnl in the db.h header with the ones returned by db_version().
++
++
++AC_DEFUN(SVN_LIB_BERKELEY_DB_TRY,
++  [
++    svn_lib_berkeley_db_try_save_cppflags="$CPPFLAGS"
++    svn_lib_berkeley_db_try_save_libs="$LIBS"
++
++    svn_check_berkeley_db_major=$1
++    svn_check_berkeley_db_minor=$2
++    svn_check_berkeley_db_patch=$3
++
++    # Extract only the -ldb.* flag from the libs supplied by apu-config
++    # Otherwise we get bit by the fact that expat might not be built yet
++    # Or that it resides in a non-standard location which we would have
++    # to compensate with using something like -R`$apu_config --prefix`/lib.
++    #
++    SVN_DB_LIBS=["${SVN_DB_LIBS-`$apu_config --libs | $SED -e 's/.*\(-ldb[^[:space:]]*\).*/\1/' | $EGREP -- '-ldb[^[:space:]]*'`}"]
++
++    CPPFLAGS="$SVN_DB_INCLUDES $SVN_APRUTIL_INCLUDES $CPPFLAGS" 
++    LIBS="`$apu_config --ldflags` $SVN_DB_LIBS $LIBS"
++
++    if test -n "$svn_berkeley_db_header"; then
++      SVN_DB_HEADER="#include <$svn_berkeley_db_header>"
++      svn_db_header="#include <$svn_berkeley_db_header>"
++    else
++      SVN_DB_HEADER="#include <apu_want.h>"
++      svn_db_header="#define APU_WANT_DB
++#include <apu_want.h>"
++    fi
++
++    AH_BOTTOM(
++#ifdef SVN_WANT_BDB
++#define APU_WANT_DB
++@SVN_DB_HEADER@
++#endif
++)
++
++    AC_RUN_IFELSE([AC_LANG_SOURCE([[
++#include <stdlib.h>
++$svn_db_header
++
++int main ()
++{
++  int major, minor, patch;
++
++  db_version (&major, &minor, &patch);
++
++  /* Sanity check: ensure that db.h constants actually match the db library */
++  if (major != DB_VERSION_MAJOR
++      || minor != DB_VERSION_MINOR
++      || patch != DB_VERSION_PATCH)
++    exit (1);
++
++  /* Run-time check:  ensure the library claims to be the correct version. */
++
++  if (major < $svn_check_berkeley_db_major)
++    exit (1);
++  if (major > $svn_check_berkeley_db_major)
++    exit (0);
++
++  if (minor < $svn_check_berkeley_db_minor)
++    exit (1);
++  if (minor > $svn_check_berkeley_db_minor)
++    exit (0);
++
++  if (patch >= $svn_check_berkeley_db_patch)
++    exit (0);
++  else
++    exit (1);
++}
++      ]])],
++      [svn_have_berkeley_db=yes],
++      [svn_have_berkeley_db=no],
++      [svn_have_berkeley_db=yes]
++    )
++
++  CPPFLAGS="$svn_lib_berkeley_db_try_save_cppflags"
++  LIBS="$svn_lib_berkeley_db_try_save_libs"
++  ]
++)
+diff -urN subversion-1.7.7.orig/configure.ac subversion-1.7.7/configure.ac
+--- subversion-1.7.7.orig/configure.ac	2013-01-14 02:06:12.291897928 +0100
++++ subversion-1.7.7/configure.ac	2013-01-14 02:37:44.749982369 +0100
+@@ -92,6 +92,9 @@
+ dnl   them.  Only .7 and later can guarantee repository
+ dnl   integrity with FSFS.
+ 
++dnl Search for pkg-config
++AC_PATH_TOOL(PKG_CONFIG, pkg-config)
++
+ APR_VER_REGEXES=["0\.9\.[7-9] 0\.9\.1[0-9] 1\. 2\."]
+ 
+ SVN_LIB_APR($APR_VER_REGEXES)
+@@ -113,9 +116,6 @@
+ fi
+ AC_SUBST(SVN_LT_SOVERSION)
+ 
+-dnl Search for pkg-config
+-AC_PATH_PROG(PKG_CONFIG, pkg-config)
+-
+ # Either a space-separated list of allowable Neon versions, or "any" to
+ # mean allow anything.
+ NEON_ALLOWED_LIST="0\.25 0\.26 0\.27\.2 0\.28 0\.29"

@@ -101,9 +101,10 @@ PKGDIR="/usr/local/arm-pkg"
 
 Link package.keywords and package.mask:
 {{{
-mkdir -p ${SYSROOT}/etc/portage/package.{keywords,mask}
+mkdir -p ${SYSROOT}/etc/portage/package.{keywords,mask,use}
 ln -s /usr/local/ambro-cross-overlay/Documentation/package.keywords ${SYSROOT}/etc/portage/package.keywords/ambro-cross
 ln -s /usr/local/ambro-cross-overlay/Documentation/package.mask ${SYSROOT}/etc/portage/package.mask/ambro-cross
+ln -s /usr/local/ambro-cross-overlay/Documentation/package.use ${SYSROOT}/etc/portage/package.use/ambro-cross
 }}}
 
 = Bootstrap the system =

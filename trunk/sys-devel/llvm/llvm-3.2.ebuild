@@ -138,7 +138,7 @@ src_configure() {
 	fi
 
 	if use gold; then
-		CONF_FLAGS="${CONF_FLAGS} --with-binutils-include=${EPREFIX}/usr/include/"
+		CONF_FLAGS="${CONF_FLAGS} --with-binutils-include=${EROOT}/usr/include/"
 	fi
 	if use ocaml; then
 		CONF_FLAGS="${CONF_FLAGS} --enable-bindings=ocaml"
@@ -191,6 +191,15 @@ src_install() {
 		insinto /usr/share/vim/vimfiles/syntax
 		doins utils/vim/*.vim
 	fi
+
+	# Make links to have binutils (in particular, ar) autoload the LLVM plugins, for LTO.
+	# https://bugs.gentoo.org/show_bug.cgi?id=422121
+	dodir /usr/${CHOST}/binutils-bin/lib/bfd-plugins
+	for plugin in {libLLVM-${PV},libLLVM-${PV}svn,libLTO,LLVMgold}.so; do
+		if [[ -e "${D}"/usr/$(get_libdir)/llvm/${plugin} ]]; then
+			dosym ../../../../$(get_libdir)/llvm/${plugin} /usr/${CHOST}/binutils-bin/lib/bfd-plugins/${plugin}
+		fi
+	done
 
 	# Fix install_names on Darwin.  The build system is too complicated
 	# to just fix this, so we correct it post-install

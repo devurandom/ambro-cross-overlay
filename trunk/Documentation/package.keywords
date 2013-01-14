@@ -13,6 +13,8 @@ dev-libs/elfutils
 dev-libs/libgpg-error
 dev-libs/libgcrypt
 dev-libs/nspr
+sys-devel/llvm
+sys-devel/clang
 
 # need new portage for HDEPEND support
 sys-apps/portage

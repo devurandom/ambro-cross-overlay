@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit flag-o-matic libtool multilib
+inherit autotools eutils flag-o-matic libtool multilib
 
 MY_P=pkg-config-${PV}
 
@@ -34,12 +34,15 @@ S=${WORKDIR}/${MY_P}
 DOCS=( AUTHORS NEWS README )
 
 src_prepare() {
+	epatch "${FILESDIR}"/pkg-config-0.27.1-cross-pkg-config.patch
+
 	sed -i -e "s|^prefix=/usr\$|prefix=${EPREFIX}/usr|" check/simple.pc || die #434320
 
 	if [[ ${PV} == *9999* ]]; then
 		eautoreconf
 	else
-		elibtoolize # Required for FreeMiNT wrt #333429
+		eautoreconf
+		#elibtoolize # Required for FreeMiNT wrt #333429
 	fi
 }
 
@@ -49,8 +52,8 @@ src_configure() {
 	if use internal-glib; then
 		myconf+=' --with-internal-glib'
 	else
-		if ! has_version dev-util/pkgconfig; then
-			export GLIB_CFLAGS="-I${EPREFIX}/usr/include/glib-2.0 -I${EPREFIX}/usr/$(get_libdir)/glib-2.0/include"
+		if ! has_version --host-root dev-util/pkgconfig; then
+			export GLIB_CFLAGS="-I${EROOT}/usr/include/glib-2.0 -I${EROOT}/usr/$(get_libdir)/glib-2.0/include"
 			export GLIB_LIBS="-lglib-2.0"
 		fi
 	fi

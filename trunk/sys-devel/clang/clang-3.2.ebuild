@@ -177,9 +177,10 @@ src_test() {
 }
 
 src_install() {
-	pushd "${S}"/build/tools/clang >/dev/null || die
+	cd "${S}"/build/tools/clang || die "cd build/tools/clang failed"
 	emake KEEP_SYMBOLS=1 DESTDIR="${D}" install
-	popd >/dev/null || die
+
+	cd "${S}"/tools/clang || die "cd tools/clang failed"
 
 	if use static-analyzer ; then
 		dobin tools/scan-build/ccc-analyzer

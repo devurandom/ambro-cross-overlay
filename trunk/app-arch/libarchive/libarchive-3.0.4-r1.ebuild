@@ -3,7 +3,7 @@
 # $Header: /var/cvsroot/gentoo-x86/app-arch/libarchive/libarchive-3.0.4-r1.ebuild,v 1.13 2013/01/06 17:00:02 armin76 Exp $
 
 EAPI=4
-inherit eutils multilib libtool
+inherit autotools eutils multilib libtool
 
 DESCRIPTION="BSD tar command"
 HOMEPAGE="http://libarchive.github.com/"
@@ -36,6 +36,11 @@ DOCS="NEWS README"
 
 src_prepare() {
 	epatch "${FILESDIR}/${P}-handle-unsupported-acl-types.patch"
+
+	# http://code.google.com/p/libarchive/issues/detail?id=297
+	epatch "${FILESDIR}"/libarchive-3.0.4-cross-compile.patch
+
+	eautoreconf
 	elibtoolize  # to allow building shared libs on Solaris/x64
 }
 

@@ -1,3 +1,4 @@
 net-fs/samba -cups
 sys-devel/llvm minimal
 sys-devel/clang -python -static-analyzer
+sys-devel/gdb -python

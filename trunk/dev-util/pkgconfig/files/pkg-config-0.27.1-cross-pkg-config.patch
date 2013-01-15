@@ -1,0 +1,12 @@
+diff -urN pkg-config-0.27.1/configure.ac pkg-config-0.27.1.new/configure.ac
+--- pkg-config-0.27.1/configure.ac	2012-08-24 14:57:27.000000000 +0200
++++ pkg-config-0.27.1.new/configure.ac	2013-01-15 20:52:34.412379393 +0100
+@@ -167,7 +167,7 @@
+ else
+   AC_MSG_RESULT([no])
+   if test "x$GLIB_CFLAGS" = "x" && test "x$GLIB_LIBS" = "x"; then
+-    AC_CHECK_PROGS([PKG_CONFIG], [pkg-config], [])
++    AC_CHECK_PROGS([PKG_CONFIG], ["${host}-pkg-config" pkg-config], [])
+     if test -n $PKG_CONFIG && $PKG_CONFIG --exists glib_module; then
+       GLIB_CFLAGS=`$PKG_CONFIG --cflags glib_module`
+       GLIB_LIBS=`$PKG_CONFIG --libs glib_module`

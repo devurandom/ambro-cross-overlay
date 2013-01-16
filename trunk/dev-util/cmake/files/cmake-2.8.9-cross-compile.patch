@@ -1,0 +1,89 @@
+diff -urN cmake-2.8.9/build-host-cmake cmake-2.8.9.new/build-host-cmake
+--- cmake-2.8.9/build-host-cmake	1970-01-01 01:00:00.000000000 +0100
++++ cmake-2.8.9.new/build-host-cmake	2013-01-16 03:23:39.557426409 +0100
+@@ -0,0 +1,16 @@
++#!/bin/sh
++
++SOURCE_DIR=$1
++BUILD_DIR=$2
++CMAKE_COMMAND=$3
++
++export CC=$BUILD_CC
++export CXX=$BUILD_CXX
++export CFLAGS=$BUILD_CFLAGS
++export CXXFLAGS=$BUILD_CXXFLAGS
++export LDFLAGS=$BUILD_LDFLAGS
++
++mkdir -p "${BUILD_DIR}" &&
++cd "${BUILD_DIR}" &&
++"${CMAKE_COMMAND}" "${SOURCE_DIR}" &&
++make cmake ccmake ctest cpack
+diff -urN cmake-2.8.9/CMakeLists.txt cmake-2.8.9.new/CMakeLists.txt
+--- cmake-2.8.9/CMakeLists.txt	2012-08-09 20:15:18.000000000 +0200
++++ cmake-2.8.9.new/CMakeLists.txt	2013-01-16 03:28:50.819440297 +0100
+@@ -632,3 +632,8 @@
+ # so that those CMake versions can find it.  We wait until after all
+ # the add_subdirectory() calls to avoid affecting the subdirectories.
+ SET(EXECUTABLE_OUTPUT_PATH ${CMake_BIN_DIR})
++
++ADD_CUSTOM_TARGET(
++  host-cmake      
++  sh ${CMAKE_SOURCE_DIR}/build-host-cmake ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/host-cmake-build ${CMAKE_COMMAND}
++)
+diff -urN cmake-2.8.9/Utilities/CMakeLists.txt cmake-2.8.9.new/Utilities/CMakeLists.txt
+--- cmake-2.8.9/Utilities/CMakeLists.txt	2012-08-09 20:15:19.000000000 +0200
++++ cmake-2.8.9.new/Utilities/CMakeLists.txt	2013-01-16 03:36:53.728461845 +0100
+@@ -45,9 +45,21 @@
+   ${CMake_BINARY_DIR}/Docs/cmake-compatcommands.html
+   )
+ 
++IF(CMAKE_CROSSCOMPILING)
++  SET(HOST_CMAKE_DEP host-cmake)
++ELSE()
++  SET(HOST_CMAKE_DEP)
++ENDIF()
++
+ MACRO(ADD_DOCS target dependency)
+   # Generate documentation for "ctest" executable.
+-  GET_TARGET_PROPERTY(CMD ${target} LOCATION)
++  IF(CMAKE_CROSSCOMPILING)
++    GET_TARGET_PROPERTY(CROSS_LOCATION ${target} LOCATION)
++    GET_FILENAME_COMPONENT(CMD_NAME ${CROSS_LOCATION} NAME)
++    SET(CMD "${CMAKE_BINARY_DIR}/host-cmake-build/bin/${CMD_NAME}")
++  ELSE()
++    GET_TARGET_PROPERTY(CMD ${target} LOCATION)
++  ENDIF()
+   # only generate the documentation if the target is actually built
+   IF(CMD)
+     ADD_CUSTOM_COMMAND(
+@@ -58,7 +70,7 @@
+            --help-full ${CMake_BINARY_DIR}/Docs/${target}.html
+            --help-full ${CMake_BINARY_DIR}/Docs/${target}.1
+            --help-full ${CMake_BINARY_DIR}/Docs/${target}.docbook
+-      DEPENDS ${target}
++      DEPENDS ${target} ${HOST_CMAKE_DEP}
+       MAIN_DEPENDENCY ${dependency}
+       )
+     SET(DOC_FILES ${DOC_FILES} ${CMake_BINARY_DIR}/Docs/${target}.txt)
+@@ -93,7 +105,11 @@
+ 
+ # add the documentation for cmake itself
+ 
+-GET_TARGET_PROPERTY(CMD cmake LOCATION)
++IF(CMAKE_CROSSCOMPILING)
++  SET(CMD "${CMAKE_BINARY_DIR}/host-cmake-build/bin/cmake")
++ELSE()
++  GET_TARGET_PROPERTY(CMD cmake LOCATION)
++ENDIF()
+ ADD_CUSTOM_COMMAND(
+   OUTPUT ${CMake_BINARY_DIR}/Docs/cmake.txt
+   COMMAND ${CMD} 
+@@ -120,7 +136,7 @@
+        --help-compatcommands ${CMake_BINARY_DIR}/Docs/cmake-compatcommands.txt
+        --help-compatcommands ${CMake_BINARY_DIR}/Docs/cmake-compatcommands.html
+        --help-compatcommands ${CMake_BINARY_DIR}/Docs/cmakecompat.1
+-  DEPENDS cmake
++  DEPENDS cmake ${HOST_CMAKE_DEP}
+   MAIN_DEPENDENCY ${CMake_SOURCE_DIR}/Utilities/Doxygen/authors.txt
+   )
+ 

@@ -61,7 +61,7 @@ inherit toolchain-funcs multilib flag-o-matic base
 
 CMAKE_EXPF="src_compile src_test src_install"
 case ${EAPI:-0} in
-	2|3|4|5) CMAKE_EXPF+=" src_configure" ;;
+	2|3|4|5|5-hdepend) CMAKE_EXPF+=" src_configure" ;;
 	1|0) ;;
 	*) die "Unknown EAPI, Bug eclass maintainers." ;;
 esac
@@ -75,7 +75,11 @@ CMAKEDEPEND+=" userland_GNU? ( >=sys-apps/findutils-4.4.0 )"
 
 [[ ${WANT_CMAKE} = always ]] || CMAKEDEPEND+=" )"
 
-DEPEND="${CMAKEDEPEND}"
+if [[ ${EAPI} = 5-hdepend ]]; then
+	HDEPEND="${CMAKEDEPEND}"
+else
+	DEPEND="${CMAKEDEPEND}"
+fi
 unset CMAKEDEPEND
 
 # Internal functions used by cmake-utils_use_*

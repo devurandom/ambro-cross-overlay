@@ -369,6 +369,25 @@ enable_cmake-utils_src_configure() {
 		SET (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 	_EOF_
 
+	if tc-is-cross-compiler; then
+		# determine if char is signed
+		local output=$(echo -e "#include <limits.h>\n #if CHAR_MIN < 0\n YES_CHAR_IS_SIGNED\n #else\n NO_CHAR_IS_NOT_SIGNED\n #endif\n" | $(tc-getCC) -E -)
+		local char_is_signed
+		if [[ ${output} =~ YES_CHAR_IS_SIGNED ]]; then
+			char_is_signed=TRUE
+		elif [[ ${output} =~ NO_CHAR_IS_NOT_SIGNED ]]; then
+			char_is_signed=FALSE
+		else
+			die "cannot determine whether char is signed"
+		fi
+
+		cat >> "${build_rules}" <<- _EOF_
+			SET (CMAKE_CROSSCOMPILING TRUE)
+			SET (KWSYS_LFS_WORKS TRUE)
+			SET (KWSYS_CHAR_IS_SIGNED ${char_is_signed})
+		_EOF_
+	fi
+
 	has "${EAPI:-0}" 0 1 2 && ! use prefix && EPREFIX=
 
 	if [[ ${EPREFIX} ]]; then

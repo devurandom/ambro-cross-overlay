@@ -1,0 +1,1 @@
+This overlay contains cross-compile improvements for Gentoo. Please read the [instructions](Instructions.md) to learn how to setup an ARM Gentoo root for cross-compiling (ideally equivalent to stage3).
